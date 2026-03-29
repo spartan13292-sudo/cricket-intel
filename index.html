@@ -3,98 +3,933 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>CricIntel — Live Fantasy Dashboard</title>
+<title>CricIntel — Fantasy Cricket Intelligence</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&family=Noto+Sans+Devanagari:wght@400;600&display=swap" rel="stylesheet"/>
 <style>
-body{margin:0;font-family:sans-serif;background:#0b0f14;color:#e6edf3}
-nav{background:#111;padding:12px;text-align:center;font-weight:bold}
-.container{padding:20px;max-width:1000px;margin:auto}
-.card{background:#161b22;border-radius:10px;padding:16px;margin-bottom:16px}
-button{background:#00d4aa;border:none;padding:10px 16px;border-radius:6px;cursor:pointer;font-weight:bold}
-select{padding:8px;margin-right:10px}
-.result{margin-top:10px;font-size:18px}
+:root {
+  --bg: #06080A;
+  --s1: #0C1117;
+  --s2: #111820;
+  --card: #131C26;
+  --border: #1D2E3E;
+  --accent: #00D4AA;
+  --gold: #F5C842;
+  --red: #FF4D6D;
+  --blue: #4D9FFF;
+  --text: #E2EDF5;
+  --muted: #4A6878;
+  --dim: #2A4050;
+  --mono: 'DM Mono', monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Syne',sans-serif;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+body::before{
+  content:'';position:fixed;inset:0;
+  background:
+    radial-gradient(ellipse 100% 60% at 0% 0%,rgba(0,212,170,0.04) 0%,transparent 50%),
+    radial-gradient(ellipse 80% 50% at 100% 100%,rgba(77,159,255,0.04) 0%,transparent 50%);
+  pointer-events:none;z-index:0;
+}
+
+/* NAV */
+nav{
+  position:sticky;top:0;z-index:100;
+  background:rgba(6,8,10,0.85);
+  backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+  padding:0 24px;
+  display:flex;align-items:center;justify-content:space-between;
+  height:56px;
+}
+.nav-logo{
+  font-size:18px;font-weight:800;letter-spacing:-0.5px;
+  background:linear-gradient(90deg,var(--accent),var(--blue));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.nav-logo span{color:var(--gold);-webkit-text-fill-color:var(--gold);}
+.nav-tabs{display:flex;gap:4px;}
+.nav-tab{
+  background:none;border:none;color:var(--muted);cursor:pointer;
+  font-family:'Syne',sans-serif;font-size:12px;font-weight:600;
+  letter-spacing:1px;padding:6px 14px;border-radius:6px;
+  text-transform:uppercase;transition:all 0.2s;
+}
+.nav-tab:hover{color:var(--text);background:rgba(255,255,255,0.04);}
+.nav-tab.active{color:var(--accent);background:rgba(0,212,170,0.08);}
+.nav-pill{
+  background:rgba(0,212,170,0.1);border:1px solid rgba(0,212,170,0.3);
+  border-radius:100px;padding:4px 12px;font-size:11px;
+  color:var(--accent);letter-spacing:1px;display:flex;align-items:center;gap:6px;
+}
+.live-dot{width:6px;height:6px;background:var(--accent);border-radius:50%;animation:blink 1.5s infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0.2;}}
+
+.wrapper{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:24px 16px 80px;}
+.page{display:none;}
+.page.active{display:block;animation:fadeIn 0.3s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+
+/* HERO */
+.hero-main{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:16px;padding:28px;position:relative;overflow:hidden;
+}
+.hero-main::after{
+  content:'🏏';position:absolute;right:-10px;bottom:-20px;
+  font-size:120px;opacity:0.04;pointer-events:none;transform:rotate(-15deg);
+}
+.hero-tag{
+  font-size:10px;letter-spacing:3px;text-transform:uppercase;
+  color:var(--accent);margin-bottom:10px;
+  display:flex;align-items:center;gap:8px;
+}
+.hero-tag::before{content:'';width:20px;height:1px;background:var(--accent);}
+.hero-title{
+  font-size:clamp(26px,4vw,42px);font-weight:800;line-height:1.1;
+  letter-spacing:-1px;margin-bottom:10px;
+}
+.hero-title em{font-style:normal;color:var(--accent);}
+.hero-sub{color:var(--muted);font-size:13px;line-height:1.6;max-width:500px;}
+
+/* STATS ROW */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:20px 0;}
+@media(max-width:640px){.stats-row{grid-template-columns:repeat(2,1fr);}}
+.stat-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:12px;padding:18px 16px;position:relative;overflow:hidden;
+}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.stat-card.green::before{background:var(--accent);}
+.stat-card.gold::before{background:var(--gold);}
+.stat-card.blue::before{background:var(--blue);}
+.stat-card.red::before{background:var(--red);}
+.stat-label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+.stat-value{font-size:28px;font-weight:800;letter-spacing:-1px;line-height:1;}
+.stat-value.green{color:var(--accent);}
+.stat-value.gold{color:var(--gold);}
+.stat-value.blue{color:var(--blue);}
+.stat-value.red{color:var(--red);}
+.stat-sub{font-size:11px;color:var(--muted);margin-top:4px;}
+
+/* ═══ QUICK MATCH CARDS ═══ */
+.section-label{
+  font-size:10px;letter-spacing:3px;text-transform:uppercase;
+  color:var(--muted);margin:24px 0 12px;
+  display:flex;align-items:center;gap:8px;
+}
+.section-label::before{content:'';width:16px;height:1px;background:var(--muted);}
+
+.quick-matches{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+  gap:10px;margin-bottom:24px;
+}
+.quick-match{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:12px;padding:16px;cursor:pointer;
+  transition:all 0.25s;position:relative;overflow:hidden;
+}
+.quick-match:hover{
+  border-color:var(--accent);transform:translateY(-2px);
+  box-shadow:0 8px 24px rgba(0,212,170,0.12);
+}
+.quick-match::after{
+  content:'ANALYZE →';position:absolute;bottom:0;left:0;right:0;
+  background:linear-gradient(135deg,#00D4AA,#007A66);
+  color:#000;font-size:10px;font-weight:800;letter-spacing:2px;
+  text-align:center;padding:6px;
+  transform:translateY(100%);transition:transform 0.25s;
+}
+.quick-match:hover::after{transform:translateY(0);}
+.qm-teams{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.qm-badge{
+  width:32px;height:32px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:800;letter-spacing:-0.5px;
+  flex-shrink:0;
+}
+.qm-vs{font-size:10px;font-weight:700;color:var(--muted);}
+.qm-venue{font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.qm-format{
+  font-size:9px;letter-spacing:1px;font-weight:700;
+  color:var(--accent);margin-top:6px;
+}
+
+/* ═══ TEAM SELECTOR ═══ */
+.team-selector{margin-bottom:20px;}
+.team-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));
+  gap:8px;
+}
+@media(max-width:500px){.team-grid{grid-template-columns:repeat(5,1fr);}}
+.team-chip{
+  background:var(--card);border:2px solid var(--border);
+  border-radius:10px;padding:10px 6px;cursor:pointer;
+  text-align:center;transition:all 0.2s;
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+}
+.team-chip:hover{border-color:rgba(255,255,255,0.15);background:rgba(255,255,255,0.03);}
+.team-chip.selected{border-color:var(--accent);background:rgba(0,212,170,0.08);}
+.team-chip .tc-abbr{
+  font-size:14px;font-weight:800;letter-spacing:-0.5px;
+}
+.team-chip .tc-name{
+  font-size:8px;letter-spacing:0.5px;color:var(--muted);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%;
+}
+.team-chip.selected .tc-name{color:var(--accent);}
+
+.selector-row{
+  display:flex;gap:16px;align-items:center;margin-bottom:16px;flex-wrap:wrap;
+}
+.vs-badge{
+  font-size:16px;font-weight:800;color:var(--muted);
+  flex-shrink:0;
+}
+.selected-team-display{
+  background:rgba(255,255,255,0.03);border:1px solid var(--border);
+  border-radius:10px;padding:10px 16px;flex:1;min-width:120px;
+  display:flex;align-items:center;gap:10px;min-height:48px;
+}
+.selected-team-display.empty{color:var(--muted);font-size:12px;font-style:italic;}
+.selected-team-display .st-name{font-size:14px;font-weight:800;}
+.selected-team-display .st-venue{font-size:10px;color:var(--muted);}
+
+/* OPTIONS ROW */
+.options-row{
+  display:flex;gap:10px;margin-bottom:20px;align-items:end;flex-wrap:wrap;
+}
+.field{display:flex;flex-direction:column;gap:5px;}
+.field label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);}
+.field select{
+  background:rgba(255,255,255,0.04);border:1px solid var(--border);
+  border-radius:8px;color:var(--text);font-family:'Syne',sans-serif;
+  font-size:13px;font-weight:600;padding:10px 12px;outline:none;
+  transition:all 0.2s;
+}
+.field select:focus{border-color:var(--accent);background:rgba(0,212,170,0.05);}
+.field select option{background:#0C1117;}
+.field input{
+  background:rgba(255,255,255,0.04);border:1px solid var(--border);
+  border-radius:8px;color:var(--text);font-family:'Syne',sans-serif;
+  font-size:13px;font-weight:600;padding:10px 12px;outline:none;
+  transition:all 0.2s;
+}
+.field input:focus{border-color:var(--accent);background:rgba(0,212,170,0.05);}
+
+.run-btn{
+  background:linear-gradient(135deg,#00D4AA,#007A66);
+  border:none;border-radius:8px;color:#000;cursor:pointer;
+  font-family:'Syne',sans-serif;font-size:12px;font-weight:800;
+  letter-spacing:2px;padding:10px 24px;text-transform:uppercase;
+  transition:all 0.2s;white-space:nowrap;height:40px;
+}
+.run-btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,212,170,0.3);}
+.run-btn:disabled{opacity:0.5;cursor:not-allowed;}
+.run-btn.big{
+  height:48px;font-size:14px;padding:12px 32px;border-radius:10px;
+}
+
+/* MAIN GRID */
+.main-grid{display:grid;grid-template-columns:2fr 1fr;gap:16px;}
+@media(max-width:800px){.main-grid{grid-template-columns:1fr;}}
+.left-col,.right-col{display:flex;flex-direction:column;gap:16px;}
+
+.card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:14px;padding:22px;position:relative;overflow:hidden;
+}
+.card-title{
+  font-size:11px;letter-spacing:3px;text-transform:uppercase;
+  color:var(--muted);margin-bottom:16px;
+  display:flex;align-items:center;gap:8px;
+}
+
+/* WIN PROB */
+.prob-teams{display:flex;align-items:center;gap:12px;margin-bottom:8px;}
+.prob-team{font-size:15px;font-weight:800;min-width:36px;}
+.prob-team.t1{color:var(--gold);}
+.prob-team.t2{color:var(--blue);}
+.prob-track{flex:1;height:10px;background:rgba(255,255,255,0.06);border-radius:100px;overflow:hidden;}
+.prob-fill{height:100%;background:linear-gradient(90deg,var(--gold),#FFA500);border-radius:100px;transition:width 1.2s cubic-bezier(0.25,1,0.5,1);width:0%;}
+.prob-pcts{display:flex;justify-content:space-between;font-family:var(--mono);font-size:12px;margin-bottom:12px;}
+.prob-pcts span:first-child{color:var(--gold);}
+.prob-pcts span:last-child{color:var(--blue);}
+.winner-line{
+  background:rgba(0,212,170,0.07);border:1px solid rgba(0,212,170,0.2);
+  border-radius:8px;padding:10px 14px;font-size:12px;font-weight:600;
+  color:var(--accent);line-height:1.5;
+}
+
+/* PITCH */
+.pitch-visual{display:flex;align-items:center;gap:16px;margin-bottom:14px;}
+.pitch-oval{
+  width:60px;height:80px;border-radius:50%;flex-shrink:0;
+  border:2px solid var(--dim);position:relative;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;
+}
+.pitch-oval-fill{position:absolute;inset:0;border-radius:50%;background:linear-gradient(180deg,#4A3520,#5A4228,#3D2A15);opacity:0.8;}
+.pitch-type-badge{position:absolute;font-size:8px;letter-spacing:1px;font-weight:700;z-index:1;color:#fff;}
+.pitch-info{flex:1;}
+.pitch-score-range{font-size:22px;font-weight:800;color:var(--gold);letter-spacing:-1px;margin-bottom:4px;}
+.pitch-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
+.pitch-tag{background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:100px;font-size:10px;letter-spacing:1px;padding:3px 10px;color:var(--muted);}
+
+/* WEATHER */
+.weather-row{display:flex;gap:10px;flex-wrap:wrap;}
+.weather-item{flex:1;min-width:80px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;}
+.weather-icon{font-size:20px;margin-bottom:4px;}
+.weather-val{font-size:16px;font-weight:800;color:var(--text);}
+.weather-key{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-top:2px;}
+
+/* PLAYERS GRID */
+.players-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
+.player-row{
+  background:rgba(255,255,255,0.03);border:1px solid var(--border);
+  border-radius:10px;padding:12px;display:flex;align-items:center;gap:10px;
+  transition:all 0.2s;
+}
+.player-row:hover{border-color:var(--accent);background:rgba(0,212,170,0.04);}
+.player-avatar{width:36px;height:36px;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px;}
+.player-avatar.bat{background:rgba(245,200,66,0.1);}
+.player-avatar.bowl{background:rgba(0,212,170,0.1);}
+.player-avatar.all{background:rgba(77,159,255,0.1);}
+.player-avatar.wk{background:rgba(255,77,109,0.1);}
+.player-info{flex:1;min-width:0;}
+.player-name{font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.player-meta{font-size:10px;color:var(--muted);font-family:var(--mono);}
+.player-badge{font-size:9px;font-weight:700;letter-spacing:1px;padding:2px 7px;border-radius:100px;}
+.player-badge.c{background:rgba(245,200,66,0.15);color:var(--gold);border:1px solid rgba(245,200,66,0.3);}
+.player-badge.vc{background:rgba(77,159,255,0.15);color:var(--blue);border:1px solid rgba(77,159,255,0.3);}
+
+/* H2H */
+.h2h-bar{display:flex;height:8px;border-radius:100px;overflow:hidden;margin:10px 0;}
+.h2h-t1{background:var(--gold);transition:width 1s ease;}
+.h2h-t2{background:var(--blue);transition:width 1s ease;}
+.h2h-labels{display:flex;justify-content:space-between;font-size:11px;font-family:var(--mono);}
+.h2h-labels span:first-child{color:var(--gold);}
+.h2h-labels span:last-child{color:var(--blue);}
+.h2h-detail{color:var(--muted);font-size:12px;line-height:1.7;margin-top:10px;}
+
+/* FORM */
+.form-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.form-team-name{font-size:12px;font-weight:700;width:40px;}
+.form-dots{display:flex;gap:5px;}
+.form-dot{width:22px;height:22px;border-radius:6px;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;}
+.form-dot.w{background:rgba(0,212,170,0.15);color:var(--accent);border:1px solid rgba(0,212,170,0.3);}
+.form-dot.l{background:rgba(255,77,109,0.1);color:var(--red);border:1px solid rgba(255,77,109,0.2);}
+.form-dot.n{background:rgba(255,255,255,0.04);color:var(--muted);border:1px solid var(--border);}
+
+/* SCRIPT */
+.script-box{
+  background:rgba(0,0,0,0.4);border:1px solid rgba(0,212,170,0.15);
+  border-radius:10px;padding:16px;font-family:'Noto Sans Devanagari','Syne',sans-serif;
+  font-size:13px;line-height:1.9;color:#9EC8D8;white-space:pre-wrap;word-wrap:break-word;
+}
+.script-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;}
+.action-btn{
+  background:rgba(255,255,255,0.05);border:1px solid var(--border);
+  border-radius:7px;color:var(--text);cursor:pointer;
+  font-family:'Syne',sans-serif;font-size:11px;font-weight:600;
+  letter-spacing:1px;padding:8px 14px;text-decoration:none;
+  transition:all 0.2s;display:flex;align-items:center;gap:6px;
+}
+.action-btn:hover{border-color:var(--accent);color:var(--accent);}
+
+/* FANTASY TABLE */
+.fantasy-table{width:100%;border-collapse:collapse;}
+.fantasy-table th{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);padding:8px 10px;text-align:left;border-bottom:1px solid var(--border);}
+.fantasy-table td{padding:10px;font-size:12px;border-bottom:1px solid rgba(255,255,255,0.04);vertical-align:middle;}
+.fantasy-table tr:last-child td{border-bottom:none;}
+.fantasy-table tr:hover td{background:rgba(255,255,255,0.02);}
+.role-pill{font-size:9px;font-weight:700;letter-spacing:1px;padding:2px 8px;border-radius:100px;}
+.role-pill.BAT{background:rgba(245,200,66,0.12);color:var(--gold);}
+.role-pill.BOWL{background:rgba(0,212,170,0.12);color:var(--accent);}
+.role-pill.ALL{background:rgba(77,159,255,0.12);color:var(--blue);}
+.role-pill.WK{background:rgba(255,77,109,0.12);color:var(--red);}
+
+/* LOADING */
+.loading-overlay{
+  display:none;position:fixed;inset:0;z-index:200;
+  background:rgba(6,8,10,0.92);backdrop-filter:blur(10px);
+  align-items:center;justify-content:center;flex-direction:column;gap:16px;
+}
+.loading-overlay.show{display:flex;}
+.spinner{width:60px;height:60px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading-msg{font-size:14px;font-weight:700;letter-spacing:2px;color:var(--accent);}
+.loading-step{font-size:12px;color:var(--muted);}
+
+.err{background:rgba(255,77,109,0.08);border:1px solid rgba(255,77,109,0.25);border-radius:10px;padding:14px;color:var(--red);font-size:13px;margin-bottom:16px;display:none;}
+.err.show{display:block;}
+
+/* COMPARE / GROUND */
+.compare-stat-row{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);}
+.compare-stat-row:last-child{border:none;}
+.cmp-val{font-family:var(--mono);font-size:13px;font-weight:500;}
+.cmp-val.t1{text-align:left;color:var(--gold);}
+.cmp-val.t2{text-align:right;color:var(--blue);}
+.cmp-val.win-t1{color:var(--accent);font-weight:700;}
+.cmp-val.win-t2{color:var(--accent);font-weight:700;}
+.cmp-label{text-align:center;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);}
+.ground-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;}
+@media(max-width:500px){.ground-stats{grid-template-columns:repeat(2,1fr);}}
+.ground-stat{background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;}
+.ground-stat .val{font-size:22px;font-weight:800;color:var(--text);letter-spacing:-1px;}
+.ground-stat .key{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-top:4px;}
+
+/* INPUT ROW for compare/ground */
+.input-row{
+  display:grid;grid-template-columns:1fr 1fr auto;
+  gap:10px;margin-bottom:20px;align-items:end;
+}
+@media(max-width:600px){.input-row{grid-template-columns:1fr;}}
+.empty-state{text-align:center;padding:48px 20px;color:var(--muted);}
+.empty-state .big{font-size:48px;margin-bottom:12px;}
+.empty-state p{font-size:13px;line-height:1.7;}
 </style>
 </head>
 <body>
 
-<nav>🏏 CricIntel — Fantasy Predictor</nav>
-
-<div class="container">
-
-<div class="card">
-<h3>Select Teams</h3>
-<select id="team1">
-<option>MI</option><option>CSK</option><option>RCB</option><option>KKR</option>
-</select>
-<select id="team2">
-<option>CSK</option><option>MI</option><option>KKR</option><option>RCB</option>
-</select>
-<button onclick="predictMatch()">Predict</button>
-
-<div class="result" id="result"></div>
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <div class="loading-msg">ANALYZING MATCH...</div>
+  <div class="loading-step" id="loadingStep">Fetching player data...</div>
 </div>
 
-<div class="card">
-<h3>Fantasy XI Suggestion</h3>
-<ul id="fantasy"></ul>
+<nav>
+  <div class="nav-logo">Cric<span>Intel</span></div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" data-page="dashboard">Dashboard</button>
+    <button class="nav-tab" data-page="compare">Compare</button>
+    <button class="nav-tab" data-page="ground">Ground</button>
+  </div>
+  <div class="nav-pill"><span class="live-dot"></span> IPL 2026</div>
+</nav>
+
+<div class="wrapper">
+
+<!-- ════════ DASHBOARD ════════ -->
+<div class="page active" id="page-dashboard">
+
+  <div class="hero-main" style="margin-bottom:0;">
+    <div class="hero-tag">Fantasy Cricket Intelligence</div>
+    <div class="hero-title">One-Tap<br/><em>Match Predictor</em></div>
+    <div class="hero-sub">Click any match below — or pick teams manually. AI generates Fantasy XI, pitch report & video script in seconds.</div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card green"><div class="stat-label">Predictions</div><div class="stat-value green" id="statPred">0</div><div class="stat-sub">This session</div></div>
+    <div class="stat-card gold"><div class="stat-label">Avg Accuracy</div><div class="stat-value gold">73%</div><div class="stat-sub">Historical</div></div>
+    <div class="stat-card blue"><div class="stat-label">IPL 2026</div><div class="stat-value blue">84</div><div class="stat-sub">Total matches</div></div>
+    <div class="stat-card red"><div class="stat-label">Dream11 Tips</div><div class="stat-value red">FREE</div><div class="stat-sub">Always</div></div>
+  </div>
+
+  <!-- ⚡ QUICK MATCHES — ONE TAP -->
+  <div class="section-label">⚡ Quick Analyze — One Tap</div>
+  <div class="quick-matches" id="quickMatches"></div>
+
+  <!-- 🏏 MANUAL PICK -->
+  <div class="section-label">🏏 Or Pick Teams Manually</div>
+
+  <div style="margin-bottom:12px;">
+    <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:8px;">Select Team 1 (Home)</div>
+    <div class="team-grid" id="teamGrid1"></div>
+  </div>
+
+  <div style="margin-bottom:16px;">
+    <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--blue);margin-bottom:8px;">Select Team 2 (Away)</div>
+    <div class="team-grid" id="teamGrid2"></div>
+  </div>
+
+  <!-- Selection display + options -->
+  <div class="selector-row">
+    <div class="selected-team-display" id="selT1"><span class="empty">← Pick Team 1</span></div>
+    <div class="vs-badge">VS</div>
+    <div class="selected-team-display" id="selT2"><span class="empty">Pick Team 2 →</span></div>
+  </div>
+
+  <div class="options-row">
+    <div class="field">
+      <label>Venue</label>
+      <select id="venueSelect"></select>
+    </div>
+    <div class="field">
+      <label>Format</label>
+      <select id="fmt">
+        <option>IPL T20</option><option>T20I</option><option>ODI</option><option>Test</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Script Language</label>
+      <select id="lang">
+        <option value="Hindi">हिंदी</option>
+        <option value="Hinglish">Hinglish</option>
+        <option value="English">English</option>
+      </select>
+    </div>
+    <button class="run-btn big" id="runBtn" onclick="analyze()">🏏 ANALYZE →</button>
+  </div>
+
+  <div class="err" id="errBox"></div>
+
+  <!-- RESULTS -->
+  <div id="resultsArea" style="display:none;">
+    <div class="main-grid">
+      <div class="left-col">
+        <div class="card"><div class="card-title">⚡ Win Probability</div>
+          <div class="prob-teams"><div class="prob-team t1" id="t1label">—</div><div class="prob-track"><div class="prob-fill" id="probFill"></div></div><div class="prob-team t2" id="t2label">—</div></div>
+          <div class="prob-pcts"><span id="p1pct">—</span><span id="p2pct">—</span></div>
+          <div class="winner-line" id="winnerLine">—</div>
+        </div>
+        <div class="card"><div class="card-title">🏟️ Pitch Report</div>
+          <div class="pitch-visual"><div class="pitch-oval"><div class="pitch-oval-fill"></div><div class="pitch-type-badge" id="pitchTypeBadge">—</div></div>
+            <div class="pitch-info"><div class="stat-label">Expected Score Range</div><div class="pitch-score-range" id="pitchScore">—</div><div class="pitch-tags" id="pitchTags"></div></div>
+          </div><div style="color:var(--muted);font-size:13px;line-height:1.7;" id="pitchDesc">—</div>
+        </div>
+        <div class="card"><div class="card-title">🌤️ Weather</div><div class="weather-row" id="weatherRow"></div><div style="color:var(--muted);font-size:12px;line-height:1.7;margin-top:12px;" id="weatherDesc">—</div></div>
+        <div class="card"><div class="card-title">🎯 Fantasy XI — Dream11</div>
+          <table class="fantasy-table"><thead><tr><th>Player</th><th>Team</th><th>Role</th><th>Pick</th></tr></thead><tbody id="fantasyTbody"></tbody></table>
+        </div>
+        <div class="card"><div class="card-title">🎬 AI Video Script</div>
+          <div class="script-box" id="scriptBox">—</div>
+          <div class="script-actions">
+            <button class="action-btn" onclick="copyScript()">📋 Copy Script</button>
+            <a class="action-btn" href="https://studio.d-id.com" target="_blank">🤖 D-ID</a>
+            <a class="action-btn" href="https://app.heygen.com" target="_blank">🎙️ HeyGen</a>
+          </div>
+        </div>
+      </div>
+      <div class="right-col">
+        <div class="card"><div class="card-title">⚔️ Head to Head</div>
+          <div class="h2h-bar"><div class="h2h-t1" id="h2hT1Bar" style="width:50%"></div><div class="h2h-t2" id="h2hT2Bar" style="width:50%"></div></div>
+          <div class="h2h-labels"><span id="h2hT1lbl">—</span><span id="h2hT2lbl">—</span></div>
+          <div class="h2h-detail" id="h2hDetail">—</div>
+        </div>
+        <div class="card"><div class="card-title">📈 Recent Form</div><div id="formRows"></div><div style="color:var(--muted);font-size:12px;line-height:1.7;margin-top:10px;" id="formDesc">—</div></div>
+        <div class="card"><div class="card-title">🌟 Key Players</div><div class="players-grid" id="keyPlayersGrid"></div></div>
+      </div>
+    </div>
+  </div>
 </div>
 
-<div class="card">
-<h3>Pitch Report</h3>
-<div id="pitch"></div>
+<!-- ════════ COMPARE ════════ -->
+<div class="page" id="page-compare">
+  <div class="hero-main card" style="margin-bottom:20px;">
+    <div class="hero-tag">Player Intelligence</div>
+    <div class="hero-title" style="font-size:28px;">Player <em>Comparison</em></div>
+    <div class="hero-sub">Compare any two players — batting, bowling, fantasy value.</div>
+  </div>
+  <div class="section-label">⚡ Popular Comparisons — One Tap</div>
+  <div class="quick-matches" id="quickCompares"></div>
+  <div class="input-row">
+    <div class="field"><label>Player 1</label><input id="cp1" placeholder="e.g. Virat Kohli"/></div>
+    <div class="field"><label>Player 2</label><input id="cp2" placeholder="e.g. Rohit Sharma"/></div>
+    <button class="run-btn" onclick="comparePlayers()">COMPARE →</button>
+  </div>
+  <div class="err" id="errCompare"></div>
+  <div id="compareResult"><div class="empty-state"><div class="big">⚔️</div><p>Click a quick comparison or enter player names above</p></div></div>
+</div>
+
+<!-- ════════ GROUND ════════ -->
+<div class="page" id="page-ground">
+  <div class="hero-main card" style="margin-bottom:20px;">
+    <div class="hero-tag">Ground Intelligence</div>
+    <div class="hero-title" style="font-size:28px;">Ground <em>History</em></div>
+    <div class="hero-sub">Deep pitch analysis — avg scores, toss impact, records.</div>
+  </div>
+  <div class="section-label">⚡ Popular Grounds — One Tap</div>
+  <div class="quick-matches" id="quickGrounds"></div>
+  <div class="input-row">
+    <div class="field"><label>Ground</label><input id="groundInput" placeholder="e.g. Eden Gardens"/></div>
+    <div class="field"><label>Format</label><select id="groundFmt"><option>IPL T20</option><option>T20I</option><option>ODI</option><option>Test</option></select></div>
+    <button class="run-btn" onclick="analyzeGround()">ANALYZE →</button>
+  </div>
+  <div class="err" id="errGround"></div>
+  <div id="groundResult"><div class="empty-state"><div class="big">🏟️</div><p>Click a ground above or enter a name manually</p></div></div>
 </div>
 
 </div>
 
 <script>
+// ═══════════════════════════════════════════════════════════
+// IPL TEAM DATABASE
+// ═══════════════════════════════════════════════════════════
+const TEAMS = [
+  { name:'Mumbai Indians', abbr:'MI', color:'#004BA0', home:'Wankhede Stadium, Mumbai' },
+  { name:'Chennai Super Kings', abbr:'CSK', color:'#F9CD05', home:'MA Chidambaram Stadium, Chennai' },
+  { name:'Royal Challengers Bengaluru', abbr:'RCB', color:'#EC1C24', home:'M. Chinnaswamy Stadium, Bengaluru' },
+  { name:'Kolkata Knight Riders', abbr:'KKR', color:'#3A225D', home:'Eden Gardens, Kolkata' },
+  { name:'Delhi Capitals', abbr:'DC', color:'#17479E', home:'Arun Jaitley Stadium, Delhi' },
+  { name:'Rajasthan Royals', abbr:'RR', color:'#EA1A85', home:'Sawai Mansingh Stadium, Jaipur' },
+  { name:'Sunrisers Hyderabad', abbr:'SRH', color:'#FF822A', home:'Rajiv Gandhi Intl Stadium, Hyderabad' },
+  { name:'Punjab Kings', abbr:'PBKS', color:'#ED1B24', home:'IS Bindra Stadium, Mohali' },
+  { name:'Gujarat Titans', abbr:'GT', color:'#1C1C2B', home:'Narendra Modi Stadium, Ahmedabad' },
+  { name:'Lucknow Super Giants', abbr:'LSG', color:'#A72056', home:'BRSABV Ekana Stadium, Lucknow' },
+];
 
-function predictMatch(){
-  const t1=document.getElementById('team1').value;
-  const t2=document.getElementById('team2').value;
+const VENUES = [...new Set(TEAMS.map(t => t.home))];
 
-  if(t1===t2){
-    document.getElementById('result').innerText="Select different teams";
-    return;
-  }
+const QUICK_MATCHES = [
+  { t1:'MI', t2:'CSK', venue:'Wankhede Stadium, Mumbai', label:'El Clasico' },
+  { t1:'RCB', t2:'MI', venue:'M. Chinnaswamy Stadium, Bengaluru', label:'Run Fest' },
+  { t1:'KKR', t2:'SRH', venue:'Eden Gardens, Kolkata', label:'East Derby' },
+  { t1:'CSK', t2:'DC', venue:'MA Chidambaram Stadium, Chennai', label:'Spin Test' },
+  { t1:'GT', t2:'RR', venue:'Narendra Modi Stadium, Ahmedabad', label:'Western War' },
+  { t1:'LSG', t2:'PBKS', venue:'BRSABV Ekana Stadium, Lucknow', label:'New Rivals' },
+  { t1:'DC', t2:'KKR', venue:'Arun Jaitley Stadium, Delhi', label:'Capital Clash' },
+  { t1:'SRH', t2:'RCB', venue:'Rajiv Gandhi Intl Stadium, Hyderabad', label:'South Showdown' },
+];
 
-  const strength={MI:85,CSK:82,RCB:78,KKR:80};
+const QUICK_COMPARES = [
+  { p1:'Virat Kohli', p2:'Rohit Sharma' },
+  { p1:'Suryakumar Yadav', p2:'KL Rahul' },
+  { p1:'Jasprit Bumrah', p2:'Mohammed Shami' },
+  { p1:'Rashid Khan', p2:'Yuzvendra Chahal' },
+  { p1:'Hardik Pandya', p2:'Ravindra Jadeja' },
+  { p1:'Shubman Gill', p2:'Yashasvi Jaiswal' },
+];
 
-  let prob1=strength[t1]/(strength[t1]+strength[t2]);
-  let prob2=1-prob1;
+const QUICK_GROUNDS = [
+  'Wankhede Stadium, Mumbai',
+  'M. Chinnaswamy Stadium, Bengaluru',
+  'Eden Gardens, Kolkata',
+  'MA Chidambaram Stadium, Chennai',
+  'Narendra Modi Stadium, Ahmedabad',
+  'Arun Jaitley Stadium, Delhi',
+];
 
-  const winner=prob1>prob2?t1:t2;
+// ═══════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════
+let selectedT1 = null, selectedT2 = null, predCount = 0;
 
-  document.getElementById('result').innerText=
-    `${winner} likely to win (${Math.round(Math.max(prob1,prob2)*100)}%)`;
+function teamByAbbr(a) { return TEAMS.find(t => t.abbr === a); }
 
-  generateFantasy(t1,t2);
-  generatePitch();
-}
+// ═══════════════════════════════════════════════════════════
+// INIT — Render all clickable elements
+// ═══════════════════════════════════════════════════════════
+function init() {
+  // Quick matches
+  document.getElementById('quickMatches').innerHTML = QUICK_MATCHES.map((m,i) => {
+    const t1 = teamByAbbr(m.t1), t2 = teamByAbbr(m.t2);
+    return `<div class="quick-match" onclick="quickAnalyze(${i})">
+      <div class="qm-teams">
+        <div class="qm-badge" style="background:${t1.color}22;color:${t1.color};border:1px solid ${t1.color}44">${t1.abbr}</div>
+        <div class="qm-vs">VS</div>
+        <div class="qm-badge" style="background:${t2.color}22;color:${t2.color};border:1px solid ${t2.color}44">${t2.abbr}</div>
+      </div>
+      <div class="qm-venue">📍 ${m.venue}</div>
+      <div class="qm-format">${m.label}</div>
+    </div>`;
+  }).join('');
 
-function generateFantasy(t1,t2){
-  const players=[
-    "Rohit Sharma","Virat Kohli","Dhoni","Russell",
-    "Hardik Pandya","Jadeja","Bumrah","Siraj","Narine","Gill","KL Rahul"
-  ];
+  // Team grids
+  ['teamGrid1','teamGrid2'].forEach((id, idx) => {
+    document.getElementById(id).innerHTML = TEAMS.map(t =>
+      `<div class="team-chip" data-grid="${idx+1}" data-abbr="${t.abbr}" onclick="selectTeam(${idx+1},'${t.abbr}')">
+        <div class="tc-abbr" style="color:${t.color}">${t.abbr}</div>
+        <div class="tc-name">${t.name.split(' ').slice(-1)[0]}</div>
+      </div>`
+    ).join('');
+  });
 
-  let selected=players.sort(()=>0.5-Math.random()).slice(0,11);
+  // Venue dropdown
+  const vs = document.getElementById('venueSelect');
+  vs.innerHTML = VENUES.map(v => `<option value="${v}">${v}</option>`).join('');
 
-  const list=document.getElementById('fantasy');
-  list.innerHTML="";
+  // Quick compares
+  document.getElementById('quickCompares').innerHTML = QUICK_COMPARES.map(function(c,i) {
+    var parts1 = c.p1.split(' ');
+    var parts2 = c.p2.split(' ');
+    var abbr1 = (parts1.length > 1 ? parts1[1] : parts1[0]).substring(0,3).toUpperCase();
+    var abbr2 = (parts2.length > 1 ? parts2[1] : parts2[0]).substring(0,3).toUpperCase();
+    return '<div class="quick-match" onclick="quickCompare('+i+')">' +
+      '<div class="qm-teams">' +
+        '<div class="qm-badge" style="background:rgba(245,200,66,0.15);color:var(--gold);border:1px solid rgba(245,200,66,0.3)">' + abbr1 + '</div>' +
+        '<div class="qm-vs">VS</div>' +
+        '<div class="qm-badge" style="background:rgba(77,159,255,0.15);color:var(--blue);border:1px solid rgba(77,159,255,0.3)">' + abbr2 + '</div>' +
+      '</div>' +
+      '<div class="qm-venue">' + c.p1 + ' vs ' + c.p2 + '</div>' +
+    '</div>';
+  }).join('');
 
-  selected.forEach(p=>{
-    const li=document.createElement('li');
-    li.innerText=p;
-    list.appendChild(li);
+  // Quick grounds
+  document.getElementById('quickGrounds').innerHTML = QUICK_GROUNDS.map((g,i) =>
+    `<div class="quick-match" onclick="quickGround(${i})">
+      <div style="font-size:24px;margin-bottom:6px;">🏟️</div>
+      <div class="qm-venue" style="white-space:normal;">${g}</div>
+    </div>`
+  ).join('');
+
+  // Nav tabs
+  document.querySelectorAll('.nav-tab').forEach(tab => {
+    tab.addEventListener('click', function() {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+      document.getElementById('page-' + this.dataset.page).classList.add('active');
+      this.classList.add('active');
+    });
   });
 }
 
-function generatePitch(){
-  const pitches=["Batting friendly","Spin friendly","Balanced pitch","High scoring"];
-  const pitch=pitches[Math.floor(Math.random()*pitches.length)];
-  document.getElementById('pitch').innerText=pitch;
+// ═══════════════════════════════════════════════════════════
+// TEAM SELECTION
+// ═══════════════════════════════════════════════════════════
+function selectTeam(grid, abbr) {
+  const team = teamByAbbr(abbr);
+  // Deselect previous in this grid
+  document.querySelectorAll(`#teamGrid${grid} .team-chip`).forEach(c => c.classList.remove('selected'));
+  document.querySelector(`#teamGrid${grid} [data-abbr="${abbr}"]`).classList.add('selected');
+
+  if (grid === 1) {
+    selectedT1 = team;
+    document.getElementById('selT1').innerHTML = `<div><div class="st-name" style="color:${team.color}">${team.name}</div><div class="st-venue">📍 ${team.home}</div></div>`;
+    document.getElementById('venueSelect').value = team.home;
+  } else {
+    selectedT2 = team;
+    document.getElementById('selT2').innerHTML = `<div><div class="st-name" style="color:${team.color}">${team.name}</div><div class="st-venue">📍 ${team.home}</div></div>`;
+  }
 }
 
-</script>
+// ═══════════════════════════════════════════════════════════
+// QUICK ACTIONS
+// ═══════════════════════════════════════════════════════════
+function quickAnalyze(idx) {
+  const m = QUICK_MATCHES[idx];
+  const t1 = teamByAbbr(m.t1), t2 = teamByAbbr(m.t2);
+  selectedT1 = t1; selectedT2 = t2;
+  document.getElementById('venueSelect').value = m.venue;
+  // Update display
+  document.getElementById('selT1').innerHTML = `<div><div class="st-name" style="color:${t1.color}">${t1.name}</div></div>`;
+  document.getElementById('selT2').innerHTML = `<div><div class="st-name" style="color:${t2.color}">${t2.name}</div></div>`;
+  analyze();
+}
 
+function quickCompare(idx) {
+  const c = QUICK_COMPARES[idx];
+  document.getElementById('cp1').value = c.p1;
+  document.getElementById('cp2').value = c.p2;
+  comparePlayers();
+}
+
+function quickGround(idx) {
+  document.getElementById('groundInput').value = QUICK_GROUNDS[idx];
+  analyzeGround();
+}
+
+// ═══════════════════════════════════════════════════════════
+// LOADING
+// ═══════════════════════════════════════════════════════════
+const steps = ['Crunching numbers...','Reading pitch...','Checking form...','Building Fantasy XI...','Writing script...'];
+let stepIdx=0, stepTimer;
+function showLoading(){stepIdx=0;document.getElementById('loadingStep').textContent=steps[0];stepTimer=setInterval(()=>{stepIdx=(stepIdx+1)%steps.length;document.getElementById('loadingStep').textContent=steps[stepIdx];},1400);document.getElementById('loadingOverlay').classList.add('show');}
+function hideLoading(){clearInterval(stepTimer);document.getElementById('loadingOverlay').classList.remove('show');}
+
+// ═══════════════════════════════════════════════════════════
+// API
+// ═══════════════════════════════════════════════════════════
+async function callAI(system, user) {
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      model:'claude-sonnet-4-20250514',
+      max_tokens:1800,
+      system,
+      messages:[{role:'user',content:user}]
+    })
+  });
+  if(!res.ok) throw new Error('API Error '+res.status);
+  const d = await res.json();
+  const text = d.content.map(b=>b.text||'').join('');
+  return JSON.parse(text.replace(/```json|```/g,'').trim());
+}
+
+// ═══════════════════════════════════════════════════════════
+// MAIN ANALYZE
+// ═══════════════════════════════════════════════════════════
+async function analyze() {
+  const t1 = selectedT1?.name;
+  const t2 = selectedT2?.name;
+  const venue = document.getElementById('venueSelect').value;
+  const fmt = document.getElementById('fmt').value;
+  const lang = document.getElementById('lang').value;
+  const errBox = document.getElementById('errBox');
+  errBox.classList.remove('show');
+
+  if(!t1||!t2){errBox.textContent='❌ Please select both teams.';errBox.classList.add('show');return;}
+  if(t1===t2){errBox.textContent='❌ Pick two different teams.';errBox.classList.add('show');return;}
+
+  document.getElementById('runBtn').disabled=true;
+  showLoading();
+
+  const system=`You are CRICKET ORACLE — expert AI cricket analyst. Return ONLY valid JSON, no markdown.
+Use real player names, real stats, real venue data. Be specific and confident.
+
+JSON (all fields required):
+{"homeWinPct":<int>,"awayWinPct":<int,sum=100>,"predictedWinner":"<team>","winReason":"<1 sentence>",
+"pitchType":"<FLAT/SEAM/SPIN/PACE/SLOW>","pitchScoreRange":"<e.g.170-190>","pitchTags":["<t1>","<t2>","<t3>"],
+"pitchDesc":"<3 sentences>",
+"weather":{"temp":"<e.g.32°C>","humidity":"<e.g.68%>","wind":"<e.g.12km/h>","dewRisk":"<High/Med/Low>","rainRisk":"<e.g.5%>"},
+"weatherDesc":"<2 sentences>",
+"h2hT1Wins":<int>,"h2hT2Wins":<int>,"h2hTotal":<int>,"h2hDetail":"<2 sentences>",
+"t1Form":["W","L","W","W","L"],"t2Form":["W","W","L","W","L"],"formDesc":"<2 sentences>",
+"keyPlayers":[{"name":"<player>","team":"<abbr>","role":"<BAT|BOWL|ALL|WK>","stat":"<key stat>"},{"name":"<p>","team":"<a>","role":"<r>","stat":"<s>"},{"name":"<p>","team":"<a>","role":"<r>","stat":"<s>"},{"name":"<p>","team":"<a>","role":"<r>","stat":"<s>"}],
+"fantasyXI":[{"name":"<p>","team":"<a>","role":"<BAT|BOWL|ALL|WK>","pick":"C"},{"name":"<p>","team":"<a>","role":"<r>","pick":"VC"},{"name":"<p>","team":"<a>","role":"<r>","pick":""},{"name":"<p>","team":"<a>","role":"<r>","pick":""},{"name":"<p>","team":"<a>","role":"<r>","pick":""},{"name":"<p>","team":"<a>","role":"<r>","pick":""},{"name":"<p>","team":"<a>","role":"<r>","pick":""},{"name":"<p>","team":"<a>","role":"<r>","pick":""},{"name":"<p>","team":"<a>","role":"<r>","pick":""},{"name":"<p>","team":"<a>","role":"<r>","pick":""},{"name":"<p>","team":"<a>","role":"<r>","pick":""}],
+"script":"<80-100 word energetic video script in ${lang}. TV anchor style. Cover: intro, pitch, 2 players, prediction, captain pick. Hindi/Hinglish = Devanagari.>"}`;
+
+  const user=`${t1} vs ${t2} | ${fmt} | ${venue} | Script: ${lang}. JSON only.`;
+
+  try{
+    const d=await callAI(system,user);
+    hideLoading();
+    renderDashboard(d,t1,t2);
+    predCount++;
+    document.getElementById('statPred').textContent=predCount;
+  }catch(e){
+    hideLoading();
+    errBox.textContent='❌ Failed: '+e.message;
+    errBox.classList.add('show');
+  }finally{document.getElementById('runBtn').disabled=false;}
+}
+
+function abbr(name){return name.split(' ').map(w=>w[0]).join('').substring(0,3).toUpperCase();}
+const roleEmoji={BAT:'🏏',BOWL:'⚡',ALL:'🌟',WK:'🧤'};
+
+function renderDashboard(d,t1,t2){
+  const a1=abbr(t1),a2=abbr(t2);
+  document.getElementById('t1label').textContent=a1;
+  document.getElementById('t2label').textContent=a2;
+  document.getElementById('p1pct').textContent=d.homeWinPct+'%';
+  document.getElementById('p2pct').textContent=d.awayWinPct+'%';
+  document.getElementById('winnerLine').textContent='🏆 '+d.predictedWinner+' — '+d.winReason;
+  setTimeout(()=>document.getElementById('probFill').style.width=d.homeWinPct+'%',200);
+
+  document.getElementById('pitchTypeBadge').textContent=d.pitchType||'';
+  document.getElementById('pitchScore').textContent=d.pitchScoreRange||'—';
+  document.getElementById('pitchDesc').textContent=d.pitchDesc||'—';
+  document.getElementById('pitchTags').innerHTML=(d.pitchTags||[]).map(t=>`<span class="pitch-tag">${t}</span>`).join('');
+
+  const w=d.weather||{};
+  document.getElementById('weatherRow').innerHTML=[
+    {icon:'🌡️',val:w.temp||'—',key:'Temp'},{icon:'💧',val:w.humidity||'—',key:'Humidity'},
+    {icon:'💨',val:w.wind||'—',key:'Wind'},{icon:'🌙',val:w.dewRisk||'—',key:'Dew'},{icon:'🌧️',val:w.rainRisk||'—',key:'Rain'},
+  ].map(i=>`<div class="weather-item"><div class="weather-icon">${i.icon}</div><div class="weather-val">${i.val}</div><div class="weather-key">${i.key}</div></div>`).join('');
+  document.getElementById('weatherDesc').textContent=d.weatherDesc||'—';
+
+  const tot=d.h2hTotal||1;
+  document.getElementById('h2hT1Bar').style.width=(d.h2hT1Wins/tot*100)+'%';
+  document.getElementById('h2hT2Bar').style.width=(d.h2hT2Wins/tot*100)+'%';
+  document.getElementById('h2hT1lbl').textContent=a1+': '+d.h2hT1Wins;
+  document.getElementById('h2hT2lbl').textContent=a2+': '+d.h2hT2Wins;
+  document.getElementById('h2hDetail').textContent=d.h2hDetail||'—';
+
+  document.getElementById('formRows').innerHTML=[{name:a1,form:d.t1Form||[]},{name:a2,form:d.t2Form||[]}].map(r=>
+    `<div class="form-row"><div class="form-team-name">${r.name}</div><div class="form-dots">${r.form.map(f=>`<div class="form-dot ${f==='W'?'w':f==='L'?'l':'n'}">${f}</div>`).join('')}</div></div>`
+  ).join('');
+  document.getElementById('formDesc').textContent=d.formDesc||'—';
+
+  document.getElementById('keyPlayersGrid').innerHTML=(d.keyPlayers||[]).map(p=>
+    `<div class="player-row"><div class="player-avatar ${p.role.toLowerCase()}">${roleEmoji[p.role]||'🏏'}</div><div class="player-info"><div class="player-name">${p.name}</div><div class="player-meta">${p.team} · ${p.stat}</div></div></div>`
+  ).join('');
+
+  document.getElementById('fantasyTbody').innerHTML=(d.fantasyXI||[]).map(p=>
+    `<tr><td style="font-weight:700">${p.name}</td><td style="color:var(--muted)">${p.team}</td><td><span class="role-pill ${p.role}">${p.role}</span></td><td>${p.pick==='C'?'<span class="player-badge c">C</span>':p.pick==='VC'?'<span class="player-badge vc">VC</span>':''}</td></tr>`
+  ).join('');
+
+  document.getElementById('scriptBox').textContent=d.script||'—';
+  document.getElementById('resultsArea').style.display='block';
+  document.getElementById('resultsArea').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function copyScript(){
+  navigator.clipboard.writeText(document.getElementById('scriptBox').textContent).then(()=>{
+    const b=document.querySelector('.script-actions .action-btn');
+    b.textContent='✅ Copied!';setTimeout(()=>b.textContent='📋 Copy Script',2000);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+// COMPARE
+// ═══════════════════════════════════════════════════════════
+async function comparePlayers(){
+  const p1=document.getElementById('cp1').value.trim();
+  const p2=document.getElementById('cp2').value.trim();
+  const err=document.getElementById('errCompare');
+  err.classList.remove('show');
+  if(!p1||!p2){err.textContent='❌ Enter both players.';err.classList.add('show');return;}
+  showLoading();
+  const system=`Cricket analyst. Compare two IPL players. Return ONLY JSON:
+{"p1":{"name":"<name>","team":"<IPL team>","role":"<BAT|BOWL|ALL|WK>","stats":[{"label":"Matches","val":"<v>"},{"label":"Runs","val":"<v>"},{"label":"Average","val":"<v>"},{"label":"Strike Rate","val":"<v>"},{"label":"50s/100s","val":"<v>"},{"label":"Best Score","val":"<v>"},{"label":"Wickets","val":"<v>"},{"label":"Economy","val":"<v>"},{"label":"Fantasy Avg Pts","val":"<v>"}]},
+"p2":{"name":"<name>","team":"<team>","role":"<role>","stats":[same 9 labels]},
+"verdict":"<3-4 sentence analysis>"}`;
+  try{
+    const d=await callAI(system,`Compare: ${p1} vs ${p2} in IPL. JSON only.`);
+    hideLoading();renderCompare(d);
+  }catch(e){hideLoading();err.textContent='❌ '+e.message;err.classList.add('show');}
+}
+
+function renderCompare(d){
+  const better=(v1,v2,h=true)=>{const n1=parseFloat(v1),n2=parseFloat(v2);if(isNaN(n1)||isNaN(n2))return['',''];return h?[n1>=n2?'win-t1':'',n2>n1?'win-t2':'']:[n1<=n2?'win-t1':'',n2<n1?'win-t2':''];};
+  const rows=d.p1.stats.map((s,i)=>{const s2=d.p2.stats[i];const[c1,c2]=better(s.val,s2.val,s.label!=='Economy');
+    return `<div class="compare-stat-row"><div class="cmp-val t1 ${c1}">${s.val}</div><div class="cmp-label">${s.label}</div><div class="cmp-val t2 ${c2}">${s2.val}</div></div>`;}).join('');
+  document.getElementById('compareResult').innerHTML=`<div class="card">
+    <div style="display:grid;grid-template-columns:1fr 40px 1fr;gap:16px;text-align:center;margin-bottom:20px;">
+      <div><div style="font-size:22px;font-weight:800;color:var(--gold)">${d.p1.name}</div><div style="font-size:11px;color:var(--muted);margin-top:2px">${d.p1.team} · ${d.p1.role}</div></div>
+      <div style="font-size:18px;font-weight:800;color:var(--muted);padding-top:8px">VS</div>
+      <div><div style="font-size:22px;font-weight:800;color:var(--blue)">${d.p2.name}</div><div style="font-size:11px;color:var(--muted);margin-top:2px">${d.p2.team} · ${d.p2.role}</div></div>
+    </div>${rows}
+    <div style="margin-top:16px;background:rgba(0,212,170,0.06);border:1px solid rgba(0,212,170,0.2);border-radius:10px;padding:14px;font-size:13px;line-height:1.7;color:var(--accent)">🧠 ${d.verdict}</div></div>`;
+}
+
+// ═══════════════════════════════════════════════════════════
+// GROUND
+// ═══════════════════════════════════════════════════════════
+async function analyzeGround(){
+  const ground=document.getElementById('groundInput').value.trim();
+  const fmt=document.getElementById('groundFmt').value;
+  const err=document.getElementById('errGround');
+  err.classList.remove('show');
+  if(!ground){err.textContent='❌ Enter a ground.';err.classList.add('show');return;}
+  showLoading();
+  const system=`Ground expert. Return ONLY JSON:
+{"groundName":"<name>","city":"<city>","country":"<country>","capacity":"<e.g.33,000>",
+"stats":[{"key":"Avg 1st Inn Score","val":"<v>"},{"key":"Avg 2nd Inn Score","val":"<v>"},{"key":"Toss Winner Wins","val":"<v>"},{"key":"Bat 1st Wins","val":"<v>"},{"key":"Highest Score","val":"<v>"},{"key":"Lowest Score","val":"<v>"},{"key":"Pace Wickets %","val":"<v>"},{"key":"Spin Wickets %","val":"<v>"},{"key":"Dew Impact","val":"<v>"}],
+"pitchType":"<Flat/Seam/Spin/Balanced>","battingAdvantage":<1-10>,
+"keyFact1":"<fact>","keyFact2":"<fact>","keyFact3":"<fact>",
+"fantasyTip":"<2-3 sentences>","overview":"<3-4 sentences>"}`;
+  try{
+    const d=await callAI(system,`Analyze: ${ground} for ${fmt}. JSON only.`);
+    hideLoading();renderGround(d);
+  }catch(e){hideLoading();err.textContent='❌ '+e.message;err.classList.add('show');}
+}
+
+function renderGround(d){
+  const adv=d.battingAdvantage||5;
+  const statsHtml=(d.stats||[]).map(s=>`<div class="ground-stat"><div class="val">${s.val}</div><div class="key">${s.key}</div></div>`).join('');
+  document.getElementById('groundResult').innerHTML=`<div class="card" style="margin-bottom:16px;">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+      <div><div style="font-size:22px;font-weight:800;letter-spacing:-0.5px">${d.groundName}</div><div style="font-size:12px;color:var(--muted);margin-top:2px">${d.city} · ${d.country} · Cap: ${d.capacity}</div></div>
+      <div style="background:rgba(245,200,66,0.1);border:1px solid rgba(245,200,66,0.3);border-radius:8px;padding:8px 14px;text-align:center"><div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted)">Pitch</div><div style="font-size:16px;font-weight:800;color:var(--gold)">${d.pitchType}</div></div>
+    </div>
+    <div style="margin-bottom:12px"><div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Batting Advantage</div><div style="height:8px;background:rgba(255,255,255,0.06);border-radius:100px;overflow:hidden"><div style="height:100%;width:${adv*10}%;background:linear-gradient(90deg,var(--accent),var(--gold));border-radius:100px;transition:width 1s ease"></div></div><div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:4px"><span>Bowler-friendly</span><span>Batter-friendly</span></div></div>
+    <div style="color:var(--muted);font-size:13px;line-height:1.7;margin-bottom:14px">${d.overview}</div>
+    <div class="ground-stats">${statsHtml}</div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">${[d.keyFact1,d.keyFact2,d.keyFact3].map(f=>`<div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--text)">⚡ ${f}</div>`).join('')}</div>
+    <div style="background:rgba(0,212,170,0.06);border:1px solid rgba(0,212,170,0.2);border-radius:10px;padding:14px"><div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:6px">🎯 Fantasy Tip</div><div style="font-size:13px;line-height:1.7;color:var(--text)">${d.fantasyTip}</div></div></div>`;
+}
+
+// INIT
+document.addEventListener('DOMContentLoaded', function() {
+  try { init(); } catch(e) { console.error('Init error:', e); }
+});
+</script>
 </body>
 </html>
