@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>CricIntel — Fantasy Cricket Intelligence</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&family=Noto+Sans+Devanagari:wght@400;600&display=swap" rel="stylesheet"/>
+<style>
+:root{--bg:#06080A;--s1:#0C1117;--s2:#111820;--card:#131C26;--border:#1D2E3E;--accent:#00D4AA;--gold:#F5C842;--red:#FF4D6D;--blue:#4D9FFF;--text:#E2EDF5;--muted:#4A6878;--dim:#2A4050;--mono:'DM Mono',monospace}
+*{margin:0;padding:0;box-sizing:border-box}html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 100% 60% at 0% 0%,rgba(0,212,170,.04) 0%,transparent 50%),radial-gradient(ellipse 80% 50% at 100% 100%,rgba(77,159,255,.04) 0%,transparent 50%);pointer-events:none;z-index:0}
+
+nav{position:sticky;top:0;z-index:100;background:rgba(6,8,10,.85);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:56px}
+.nav-logo{font-size:18px;font-weight:800;letter-spacing:-.5px;background:linear-gradient(90deg,var(--accent),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.nav-logo span{color:var(--gold);-webkit-text-fill-color:var(--gold)}
+.nav-tabs{display:flex;gap:4px}
+.nav-tab{background:none;border:none;color:var(--muted);cursor:pointer;font-family:'Syne',sans-serif;font-size:12px;font-weight:600;letter-spacing:1px;padding:6px 14px;border-radius:6px;text-transform:uppercase;transition:all .2s}
+.nav-tab:hover{color:var(--text);background:rgba(255,255,255,.04)}
+.nav-tab.active{color:var(--accent);background:rgba(0,212,170,.08)}
+.nav-pill{background:rgba(0,212,170,.1);border:1px solid rgba(0,212,170,.3);border-radius:100px;padding:4px 12px;font-size:11px;color:var(--accent);letter-spacing:1px;display:flex;align-items:center;gap:6px}
+.live-dot{width:6px;height:6px;background:var(--accent);border-radius:50%;animation:blink 1.5s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+
+.wrapper{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:24px 16px 80px}
+.page{display:none}.page.active{display:block;animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+.hero-main{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:28px;position:relative;overflow:hidden}
+.hero-main::after{content:'🏏';position:absolute;right:-10px;bottom:-20px;font-size:120px;opacity:.04;pointer-events:none;transform:rotate(-15deg)}
+.hero-tag{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--accent);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.hero-tag::before{content:'';width:20px;height:1px;background:var(--accent)}
+.hero-title{font-size:clamp(26px,4vw,42px);font-weight:800;line-height:1.1;letter-spacing:-1px;margin-bottom:10px}
+.hero-title em{font-style:normal;color:var(--accent)}
+.hero-sub{color:var(--muted);font-size:13px;line-height:1.6;max-width:500px}
+
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:20px 0}
+@media(max-width:640px){.stats-row{grid-template-columns:repeat(2,1fr)}}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px 16px;position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.stat-card.green::before{background:var(--accent)}.stat-card.gold::before{background:var(--gold)}.stat-card.blue::before{background:var(--blue)}.stat-card.red::before{background:var(--red)}
+.stat-label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.stat-value{font-size:28px;font-weight:800;letter-spacing:-1px;line-height:1}
+.stat-value.green{color:var(--accent)}.stat-value.gold{color:var(--gold)}.stat-value.blue{color:var(--blue)}.stat-value.red{color:var(--red)}
+.stat-sub{font-size:11px;color:var(--muted);margin-top:4px}
+
+.section-label{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin:24px 0 12px;display:flex;align-items:center;gap:8px}
+.section-label::before{content:'';width:16px;height:1px;background:var(--muted)}
+
+.quick-matches{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-bottom:24px}
+.quick-match{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;cursor:pointer;transition:all .25s;position:relative;overflow:hidden}
+.quick-match:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,212,170,.12)}
+.quick-match::after{content:'ANALYZE →';position:absolute;bottom:0;left:0;right:0;background:linear-gradient(135deg,#00D4AA,#007A66);color:#000;font-size:10px;font-weight:800;letter-spacing:2px;text-align:center;padding:6px;transform:translateY(100%);transition:transform .25s}
+.quick-match:hover::after{transform:translateY(0)}
+.qm-teams{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.qm-badge{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;letter-spacing:-.5px;flex-shrink:0}
+.qm-vs{font-size:10px;font-weight:700;color:var(--muted)}
+.qm-venue{font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qm-format{font-size:9px;letter-spacing:1px;font-weight:700;color:var(--accent);margin-top:6px}
+
+.options-row{display:flex;gap:10px;margin-bottom:20px;align-items:end;flex-wrap:wrap}
+.field{display:flex;flex-direction:column;gap:5px;flex:1;min-width:140px}
+.field label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--accent)}
+.field select,.field input{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Syne',sans-serif;font-size:13px;font-weight:600;padding:10px 12px;outline:none;transition:all .2s;width:100%}
+.field select:focus,.field input:focus{border-color:var(--accent);background:rgba(0,212,170,.05)}
+.field select option{background:#0C1117}
+
+.run-btn{background:linear-gradient(135deg,#00D4AA,#007A66);border:none;border-radius:8px;color:#000;cursor:pointer;font-family:'Syne',sans-serif;font-size:12px;font-weight:800;letter-spacing:2px;padding:10px 24px;text-transform:uppercase;transition:all .2s;white-space:nowrap;height:42px;flex-shrink:0}
+.run-btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,212,170,.3)}
+.run-btn:disabled{opacity:.5;cursor:not-allowed}
+.run-btn.big{height:48px;font-size:14px;padding:12px 32px;border-radius:10px}
+
+.main-grid{display:grid;grid-template-columns:2fr 1fr;gap:16px}
+@media(max-width:800px){.main-grid{grid-template-columns:1fr}}
+.left-col,.right-col{display:flex;flex-direction:column;gap:16px}
+
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px;position:relative;overflow:hidden}
+.card-title{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+
+.prob-teams{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.prob-team{font-size:15px;font-weight:800;min-width:36px}
+.prob-team.t1{color:var(--gold)}.prob-team.t2{color:var(--blue)}
+.prob-track{flex:1;height:10px;background:rgba(255,255,255,.06);border-radius:100px;overflow:hidden;display:flex}
+.prob-fill-1{height:100%;background:linear-gradient(90deg,var(--gold),#FFA500);border-radius:100px 0 0 100px;transition:width 1.2s cubic-bezier(.25,1,.5,1)}
+.prob-fill-2{height:100%;background:linear-gradient(90deg,#3377CC,var(--blue));border-radius:0 100px 100px 0;transition:width 1.2s cubic-bezier(.25,1,.5,1)}
+.prob-pcts{display:flex;justify-content:space-between;font-family:var(--mono);font-size:12px;margin-bottom:12px}
+.prob-pcts span:first-child{color:var(--gold)}.prob-pcts span:last-child{color:var(--blue)}
+.winner-line{background:rgba(0,212,170,.07);border:1px solid rgba(0,212,170,.2);border-radius:8px;padding:10px 14px;font-size:12px;font-weight:600;color:var(--accent);line-height:1.5}
+
+.pitch-visual{display:flex;align-items:center;gap:16px;margin-bottom:14px}
+.pitch-oval{width:60px;height:80px;border-radius:50%;flex-shrink:0;border:2px solid var(--dim);position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.pitch-oval-fill{position:absolute;inset:0;border-radius:50%}
+.pitch-type-badge{position:relative;font-size:8px;letter-spacing:1px;font-weight:700;z-index:1;color:#fff;text-transform:uppercase}
+.pitch-info{flex:1}
+.pitch-score-range{font-size:22px;font-weight:800;color:var(--gold);letter-spacing:-1px;margin-bottom:4px}
+.pitch-desc{font-size:12px;color:var(--muted);line-height:1.5}
+.pitch-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.pitch-tag{background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:100px;font-size:10px;letter-spacing:1px;padding:3px 10px;color:var(--muted)}
+
+.weather-row{display:flex;gap:10px;flex-wrap:wrap}
+.weather-item{flex:1;min-width:80px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center}
+.weather-icon{font-size:20px;margin-bottom:4px}
+.weather-val{font-size:16px;font-weight:800;color:var(--text)}
+.weather-key{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-top:2px}
+
+.fantasy-table{width:100%;border-collapse:collapse}
+.fantasy-table th{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);padding:8px 10px;text-align:left;border-bottom:1px solid var(--border)}
+.fantasy-table td{padding:10px;font-size:12px;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:middle}
+.fantasy-table tr:last-child td{border-bottom:none}
+.fantasy-table tr:hover td{background:rgba(255,255,255,.02)}
+.role-pill{font-size:9px;font-weight:700;letter-spacing:1px;padding:2px 8px;border-radius:100px;display:inline-block}
+.role-pill.BAT{background:rgba(245,200,66,.12);color:var(--gold)}
+.role-pill.BOWL{background:rgba(0,212,170,.12);color:var(--accent)}
+.role-pill.ALL{background:rgba(77,159,255,.12);color:var(--blue)}
+.role-pill.WK{background:rgba(255,77,109,.12);color:var(--red)}
+.badge-c{font-size:9px;font-weight:700;letter-spacing:1px;padding:2px 7px;border-radius:100px;background:rgba(245,200,66,.15);color:var(--gold);border:1px solid rgba(245,200,66,.3)}
+.badge-vc{font-size:9px;font-weight:700;letter-spacing:1px;padding:2px 7px;border-radius:100px;background:rgba(77,159,255,.15);color:var(--blue);border:1px solid rgba(77,159,255,.3)}
+
+.h2h-bar{display:flex;height:8px;border-radius:100px;overflow:hidden;margin:10px 0}
+.h2h-t1{background:var(--gold);transition:width 1s ease}
+.h2h-t2{background:var(--blue);transition:width 1s ease}
+.h2h-nr{background:var(--dim);transition:width 1s ease}
+.h2h-labels{display:flex;justify-content:space-between;font-size:11px;font-family:var(--mono)}
+.h2h-labels span:first-child{color:var(--gold)}.h2h-labels span:last-child{color:var(--blue)}
+.h2h-detail{color:var(--muted);font-size:12px;line-height:1.7;margin-top:10px}
+
+.form-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.form-team-name{font-size:12px;font-weight:700;width:50px}
+.form-dots{display:flex;gap:5px}
+.form-dot{width:22px;height:22px;border-radius:6px;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.form-dot.w{background:rgba(0,212,170,.15);color:var(--accent);border:1px solid rgba(0,212,170,.3)}
+.form-dot.l{background:rgba(255,77,109,.1);color:var(--red);border:1px solid rgba(255,77,109,.2)}
+
+.script-box{background:rgba(0,0,0,.4);border:1px solid rgba(0,212,170,.15);border-radius:10px;padding:16px;font-family:'Noto Sans Devanagari','Syne',sans-serif;font-size:13px;line-height:1.9;color:#9EC8D8;white-space:pre-wrap;word-wrap:break-word;max-height:400px;overflow-y:auto}
+.script-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.action-btn{background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:7px;color:var(--text);cursor:pointer;font-family:'Syne',sans-serif;font-size:11px;font-weight:600;letter-spacing:1px;padding:8px 14px;transition:all .2s;display:flex;align-items:center;gap:6px}
+.action-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+.loading-overlay{display:none;position:fixed;inset:0;z-index:200;background:rgba(6,8,10,.92);backdrop-filter:blur(10px);align-items:center;justify-content:center;flex-direction:column;gap:16px}
+.loading-overlay.show{display:flex}
+.spinner{width:60px;height:60px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-msg{font-size:14px;font-weight:700;letter-spacing:2px;color:var(--accent)}
+.loading-step{font-size:12px;color:var(--muted)}
+
+.err{background:rgba(255,77,109,.08);border:1px solid rgba(255,77,109,.25);border-radius:10px;padding:14px;color:var(--red);font-size:13px;margin-bottom:16px;display:none}
+.err.show{display:block}
+
+.compare-stat-row{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.compare-stat-row:last-child{border:none}
+.cmp-val{font-family:var(--mono);font-size:13px;font-weight:500}
+.cmp-val.t1{text-align:right;color:var(--gold)}.cmp-val.t2{text-align:left;color:var(--blue)}
+.cmp-label{text-align:center;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);min-width:90px}
+.cmp-win{color:var(--accent) !important;font-weight:700 !important}
+
+.ground-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+@media(max-width:500px){.ground-stats{grid-template-columns:repeat(2,1fr)}}
+.ground-stat{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center}
+.ground-stat .val{font-size:22px;font-weight:800;color:var(--text);letter-spacing:-1px}
+.ground-stat .key{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-top:4px}
+
+.empty-state{text-align:center;padding:48px 20px;color:var(--muted)}
+.empty-state .big{font-size:48px;margin-bottom:12px}
+.empty-state p{font-size:13px;line-height:1.7}
+
+.player-lookup{margin-top:16px}
+.player-detail-card{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:12px;padding:16px;margin-top:10px;display:none}
+.player-detail-card.show{display:block}
+.pd-header{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.pd-avatar{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px}
+.pd-name{font-size:16px;font-weight:800}
+.pd-team{font-size:11px;color:var(--muted)}
+.pd-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.pd-stat{text-align:center;padding:8px;background:rgba(255,255,255,.02);border-radius:8px}
+.pd-stat .v{font-size:18px;font-weight:800;color:var(--accent)}
+.pd-stat .k{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-top:2px}
+
+.tab-btns{display:flex;gap:4px;margin-bottom:16px}
+.tab-btn{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:6px;color:var(--muted);cursor:pointer;font-family:'Syne',sans-serif;font-size:11px;font-weight:600;letter-spacing:1px;padding:6px 14px;transition:all .2s}
+.tab-btn.active{color:var(--accent);background:rgba(0,212,170,.08);border-color:rgba(0,212,170,.3)}
+.tab-btn:hover{color:var(--text)}
+
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--accent);color:#000;font-size:12px;font-weight:700;letter-spacing:1px;padding:10px 24px;border-radius:100px;z-index:300;transition:transform .3s ease;pointer-events:none}
+.toast.show{transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <div class="loading-msg">ANALYZING MATCH...</div>
+  <div class="loading-step" id="loadingStep">Fetching player data...</div>
+</div>
+
+<div class="toast" id="toast">Copied to clipboard!</div>
+
+<nav>
+  <div class="nav-logo">Cric<span>Intel</span></div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" data-page="dashboard">Dashboard</button>
+    <button class="nav-tab" data-page="compare">Compare</button>
+    <button class="nav-tab" data-page="ground">Ground</button>
+  </div>
+  <div class="nav-pill"><span class="live-dot"></span> IPL 2025</div>
+</nav>
+
+<div class="wrapper">
+
+<!-- ═══════════ DASHBOARD ═══════════ -->
+<div class="page active" id="page-dashboard">
+  <div class="hero-main" style="margin-bottom:0">
+    <div class="hero-tag">Fantasy Cricket Intelligence</div>
+    <div class="hero-title">One-Tap<br/><em>Match Predictor</em></div>
+    <div class="hero-sub">Click any match below — or pick teams manually. AI generates Fantasy XI, pitch report &amp; video script in seconds.</div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card green"><div class="stat-label">Predictions</div><div class="stat-value green" id="statPred">0</div><div class="stat-sub">This session</div></div>
+    <div class="stat-card gold"><div class="stat-label">Avg Accuracy</div><div class="stat-value gold">73%</div><div class="stat-sub">Historical</div></div>
+    <div class="stat-card blue"><div class="stat-label">IPL 2025</div><div class="stat-value blue">74</div><div class="stat-sub">Total matches</div></div>
+    <div class="stat-card red"><div class="stat-label">Dream11 Tips</div><div class="stat-value red">FREE</div><div class="stat-sub">Always</div></div>
+  </div>
+
+  <div class="section-label">⚡ Quick Analyze — One Tap</div>
+  <div class="quick-matches" id="quickMatches"></div>
+
+  <div class="section-label">🏏 Manual Analysis</div>
+  <div class="err" id="errMsg"></div>
+
+  <div class="options-row">
+    <div class="field">
+      <label>Team A</label>
+      <select id="selTeamA"><option value="">— Select Team —</option></select>
+    </div>
+    <div class="field">
+      <label>Team B</label>
+      <select id="selTeamB"><option value="">— Select Team —</option></select>
+    </div>
+    <div class="field">
+      <label>Venue</label>
+      <select id="selVenue"><option value="">— Select Venue —</option></select>
+    </div>
+  </div>
+  <div class="options-row">
+    <div class="field">
+      <label>Toss Winner</label>
+      <select id="selToss"><option value="">— After teams —</option></select>
+    </div>
+    <div class="field">
+      <label>Toss Decision</label>
+      <select id="selDecision">
+        <option value="bat">Bat First</option>
+        <option value="bowl">Bowl First</option>
+      </select>
+    </div>
+    <button class="run-btn big" id="btnAnalyze" onclick="runAnalysis()">🔮 ANALYZE MATCH</button>
+  </div>
+
+  <!-- Player Lookup -->
+  <div class="section-label">🔍 Player Lookup</div>
+  <div class="options-row">
+    <div class="field">
+      <label>Select Team</label>
+      <select id="selLookupTeam" onchange="updatePlayerDropdown()"><option value="">— Select Team —</option></select>
+    </div>
+    <div class="field">
+      <label>Select Player</label>
+      <select id="selLookupPlayer" onchange="showPlayerDetail()"><option value="">— Select Player —</option></select>
+    </div>
+  </div>
+  <div class="player-detail-card" id="playerDetailCard"></div>
+
+  <!-- Results -->
+  <div id="resultsArea" style="display:none">
+    <div class="section-label">📊 Analysis Results</div>
+
+    <div class="card" style="margin-bottom:16px" id="winProbCard">
+      <div class="card-title">🎯 Win Probability</div>
+      <div class="prob-teams">
+        <span class="prob-team t1" id="probT1">—</span>
+        <div class="prob-track">
+          <div class="prob-fill-1" id="probFill1" style="width:50%"></div>
+          <div class="prob-fill-2" id="probFill2" style="width:50%"></div>
+        </div>
+        <span class="prob-team t2" id="probT2">—</span>
+      </div>
+      <div class="prob-pcts"><span id="probPct1">50%</span><span id="probPct2">50%</span></div>
+      <div class="winner-line" id="winnerLine"></div>
+    </div>
+
+    <div class="main-grid">
+      <div class="left-col">
+        <div class="card" id="pitchCard">
+          <div class="card-title">🏟️ Pitch Report</div>
+          <div id="pitchContent"></div>
+        </div>
+        <div class="card" id="fantasyCard">
+          <div class="card-title">⭐ Dream11 Fantasy XI</div>
+          <div id="fantasyContent"></div>
+        </div>
+        <div class="card" id="scriptCard">
+          <div class="card-title">🎬 YouTube Video Script</div>
+          <div class="tab-btns">
+            <button class="tab-btn active" onclick="showScript('hindi')">हिन्दी</button>
+            <button class="tab-btn" onclick="showScript('english')">English</button>
+          </div>
+          <div class="script-box" id="scriptBox"></div>
+          <div class="script-actions">
+            <button class="action-btn" onclick="copyScript()">📋 Copy Script</button>
+            <button class="action-btn" onclick="copyFantasy()">📋 Copy Fantasy XI</button>
+          </div>
+        </div>
+      </div>
+      <div class="right-col">
+        <div class="card" id="weatherCard">
+          <div class="card-title">🌤️ Weather</div>
+          <div class="weather-row" id="weatherContent"></div>
+        </div>
+        <div class="card" id="h2hCard">
+          <div class="card-title">⚔️ Head to Head</div>
+          <div id="h2hContent"></div>
+        </div>
+        <div class="card" id="formCard">
+          <div class="card-title">📈 Recent Form</div>
+          <div id="formContent"></div>
+        </div>
+        <div class="card" id="keyPlayersCard">
+          <div class="card-title">🔑 Key Players</div>
+          <div id="keyPlayersContent"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ COMPARE ═══════════ -->
+<div class="page" id="page-compare">
+  <div class="hero-main" style="margin-bottom:20px">
+    <div class="hero-tag">Team Comparison</div>
+    <div class="hero-title">Head to <em>Head</em></div>
+    <div class="hero-sub">Compare two IPL teams across all key metrics — batting, bowling, experience &amp; more.</div>
+  </div>
+  <div class="options-row">
+    <div class="field"><label>Team A</label><select id="cmpTeamA"><option value="">— Select —</option></select></div>
+    <div class="field"><label>Team B</label><select id="cmpTeamB"><option value="">— Select —</option></select></div>
+    <button class="run-btn big" onclick="runCompare()">⚔️ COMPARE</button>
+  </div>
+  <div id="compareResults"></div>
+</div>
+
+<!-- ═══════════ GROUND ═══════════ -->
+<div class="page" id="page-ground">
+  <div class="hero-main" style="margin-bottom:20px">
+    <div class="hero-tag">Ground Intelligence</div>
+    <div class="hero-title">Venue <em>Analysis</em></div>
+    <div class="hero-sub">Deep-dive into any IPL venue — pitch behaviour, average scores, boundary size &amp; historical trends.</div>
+  </div>
+  <div class="options-row">
+    <div class="field"><label>Select Venue</label><select id="gndVenue"><option value="">— Select Venue —</option></select></div>
+    <button class="run-btn big" onclick="runGround()">🏟️ ANALYZE GROUND</button>
+  </div>
+  <div id="groundResults"></div>
+</div>
+
+</div><!-- /wrapper -->
+
+<script>
+/* ═══════════════════════════════════════
+   DATA — ALL IPL TEAMS & PLAYERS (2025)
+   ═══════════════════════════════════════ */
+const TEAMS={
+CSK:{name:'Chennai Super Kings',short:'CSK',color:'#F9CD05',textColor:'#000',venue:'MA Chidambaram Stadium, Chennai',captain:'Ruturaj Gaikwad',strength:88,
+players:[
+{name:'Ruturaj Gaikwad',role:'BAT',rating:90,isCaptain:true,price:'₹18Cr',bat:'RHB',bowl:'-',matches:75,runs:2500,wkts:0},
+{name:'Devon Conway',role:'BAT',rating:84,price:'₹6.25Cr',bat:'LHB',bowl:'-',matches:45,runs:1400,wkts:0},
+{name:'Rahul Tripathi',role:'BAT',rating:78,price:'₹3.4Cr',bat:'RHB',bowl:'-',matches:90,runs:2100,wkts:0},
+{name:'Shivam Dube',role:'ALL',rating:82,price:'₹12Cr',bat:'LHB',bowl:'RMF',matches:80,runs:1800,wkts:15},
+{name:'Ravindra Jadeja',role:'ALL',rating:89,price:'₹18Cr',bat:'LHB',bowl:'SLA',matches:220,runs:2500,wkts:150},
+{name:'MS Dhoni',role:'WK',rating:85,price:'₹4Cr',bat:'RHB',bowl:'-',matches:264,runs:5200,wkts:0},
+{name:'Rachin Ravindra',role:'ALL',rating:80,price:'₹4Cr',bat:'LHB',bowl:'SLA',matches:15,runs:300,wkts:5},
+{name:'Sam Curran',role:'ALL',rating:83,price:'₹2.4Cr',bat:'LHB',bowl:'LMF',matches:40,runs:500,wkts:35},
+{name:'Vijay Shankar',role:'ALL',rating:74,price:'₹1.2Cr',bat:'RHB',bowl:'RMF',matches:60,runs:700,wkts:20},
+{name:'Matheesha Pathirana',role:'BOWL',rating:87,price:'₹13Cr',bat:'RHB',bowl:'RF',matches:25,runs:30,wkts:38},
+{name:'Khaleel Ahmed',role:'BOWL',rating:79,price:'₹5.2Cr',bat:'RHB',bowl:'LMF',matches:50,runs:20,wkts:55},
+{name:'Noor Ahmad',role:'BOWL',rating:76,price:'₹10Cr',bat:'RHB',bowl:'SLC',matches:10,runs:5,wkts:12},
+{name:'Shardul Thakur',role:'BOWL',rating:78,price:'₹1.2Cr',bat:'RHB',bowl:'RMF',matches:75,runs:300,wkts:80},
+{name:'Mukesh Choudhary',role:'BOWL',rating:72,price:'₹0.3Cr',bat:'LHB',bowl:'LMF',matches:18,runs:10,wkts:16},
+{name:'Deepak Chahar',role:'BOWL',rating:80,price:'₹9.25Cr',bat:'RHB',bowl:'RMF',matches:65,runs:150,wkts:70}
+]},
+
+MI:{name:'Mumbai Indians',short:'MI',color:'#004BA0',textColor:'#fff',venue:'Wankhede Stadium, Mumbai',captain:'Hardik Pandya',strength:90,
+players:[
+{name:'Rohit Sharma',role:'BAT',rating:92,price:'₹16.3Cr',bat:'RHB',bowl:'-',matches:250,runs:6200,wkts:0},
+{name:'Suryakumar Yadav',role:'BAT',rating:91,price:'₹16.35Cr',bat:'RHB',bowl:'-',matches:100,runs:3000,wkts:0},
+{name:'Hardik Pandya',role:'ALL',rating:89,isCaptain:true,price:'₹16.35Cr',bat:'RHB',bowl:'RMF',matches:120,runs:2200,wkts:60},
+{name:'Tilak Varma',role:'BAT',rating:85,price:'₹8Cr',bat:'LHB',bowl:'SLA',matches:45,runs:1300,wkts:2},
+{name:'Jasprit Bumrah',role:'BOWL',rating:95,price:'₹18Cr',bat:'RHB',bowl:'RF',matches:130,runs:50,wkts:165},
+{name:'Trent Boult',role:'BOWL',rating:86,price:'₹12.5Cr',bat:'RHB',bowl:'LMF',matches:70,runs:30,wkts:85},
+{name:'Tim David',role:'BAT',rating:82,price:'₹6.5Cr',bat:'RHB',bowl:'-',matches:35,runs:600,wkts:0},
+{name:'Will Jacks',role:'ALL',rating:81,price:'₹5.25Cr',bat:'RHB',bowl:'OB',matches:20,runs:400,wkts:10},
+{name:'Robin Minz',role:'WK',rating:72,price:'₹0.65Cr',bat:'RHB',bowl:'-',matches:5,runs:80,wkts:0},
+{name:'Naman Dhir',role:'BAT',rating:74,price:'₹5.25Cr',bat:'LHB',bowl:'-',matches:8,runs:180,wkts:0},
+{name:'Deepak Chahar',role:'BOWL',rating:80,price:'₹9.25Cr',bat:'RHB',bowl:'RMF',matches:65,runs:150,wkts:70},
+{name:'Reece Topley',role:'BOWL',rating:77,price:'₹0.75Cr',bat:'LHB',bowl:'LMF',matches:10,runs:5,wkts:12},
+{name:'Allah Ghazanfar',role:'BOWL',rating:73,price:'₹4.8Cr',bat:'RHB',bowl:'OB',matches:5,runs:10,wkts:6},
+{name:'Raj Bawa',role:'ALL',rating:70,price:'₹0.3Cr',bat:'LHB',bowl:'RMF',matches:8,runs:60,wkts:4},
+{name:'Bevon Jacobs',role:'BAT',rating:68,price:'₹0.3Cr',bat:'RHB',bowl:'-',matches:2,runs:30,wkts:0}
+]},
+
+RCB:{name:'Royal Challengers Bengaluru',short:'RCB',color:'#EC1C24',textColor:'#fff',venue:'M Chinnaswamy Stadium, Bengaluru',captain:'Rajat Patidar',strength:86,
+players:[
+{name:'Virat Kohli',role:'BAT',rating:94,price:'₹21Cr',bat:'RHB',bowl:'-',matches:260,runs:8000,wkts:0},
+{name:'Rajat Patidar',role:'BAT',rating:83,isCaptain:true,price:'₹11Cr',bat:'RHB',bowl:'-',matches:30,runs:800,wkts:0},
+{name:'Phil Salt',role:'WK',rating:86,price:'₹11.5Cr',bat:'RHB',bowl:'-',matches:25,runs:700,wkts:0},
+{name:'Liam Livingstone',role:'ALL',rating:84,price:'₹8.75Cr',bat:'RHB',bowl:'LB',matches:30,runs:500,wkts:15},
+{name:'Jitesh Sharma',role:'WK',rating:78,price:'₹11Cr',bat:'RHB',bowl:'-',matches:30,runs:500,wkts:0},
+{name:'Krunal Pandya',role:'ALL',rating:79,price:'₹5.75Cr',bat:'LHB',bowl:'SLA',matches:100,runs:800,wkts:65},
+{name:'Bhuvneshwar Kumar',role:'BOWL',rating:82,price:'₹10.75Cr',bat:'RHB',bowl:'RMF',matches:170,runs:200,wkts:180},
+{name:'Josh Hazlewood',role:'BOWL',rating:85,price:'₹12.5Cr',bat:'LHB',bowl:'RF',matches:45,runs:20,wkts:55},
+{name:'Yash Dayal',role:'BOWL',rating:78,price:'₹5Cr',bat:'LHB',bowl:'LMF',matches:25,runs:10,wkts:28},
+{name:'Suyash Sharma',role:'BOWL',rating:73,price:'₹2.6Cr',bat:'RHB',bowl:'LB',matches:8,runs:5,wkts:10},
+{name:'Rasikh Dar',role:'BOWL',rating:72,price:'₹0.3Cr',bat:'RHB',bowl:'RMF',matches:5,runs:3,wkts:5},
+{name:'Romario Shepherd',role:'ALL',rating:76,price:'₹1.5Cr',bat:'RHB',bowl:'RMF',matches:15,runs:120,wkts:12},
+{name:'Swapnil Singh',role:'ALL',rating:70,price:'₹0.5Cr',bat:'LHB',bowl:'SLA',matches:10,runs:50,wkts:8},
+{name:'Manoj Bhandage',role:'ALL',rating:68,price:'₹0.3Cr',bat:'LHB',bowl:'LMF',matches:5,runs:30,wkts:3},
+{name:'Tim David',role:'BAT',rating:82,price:'₹0.3Cr',bat:'RHB',bowl:'-',matches:35,runs:600,wkts:0}
+]},
+
+KKR:{name:'Kolkata Knight Riders',short:'KKR',color:'#3A225D',textColor:'#fff',venue:'Eden Gardens, Kolkata',captain:'Venkatesh Iyer',strength:87,
+players:[
+{name:'Venkatesh Iyer',role:'ALL',rating:82,isCaptain:true,price:'₹23.75Cr',bat:'LHB',bowl:'RMF',matches:55,runs:1200,wkts:8},
+{name:'Rinku Singh',role:'BAT',rating:84,price:'₹13Cr',bat:'LHB',bowl:'-',matches:45,runs:1000,wkts:0},
+{name:'Andre Russell',role:'ALL',rating:88,price:'₹12Cr',bat:'RHB',bowl:'RF',matches:110,runs:2200,wkts:90},
+{name:'Sunil Narine',role:'ALL',rating:86,price:'₹12Cr',bat:'LHB',bowl:'OB',matches:175,runs:1200,wkts:180},
+{name:'Varun Chakravarthy',role:'BOWL',rating:83,price:'₹12Cr',bat:'RHB',bowl:'OB',matches:45,runs:10,wkts:55},
+{name:'Harshit Rana',role:'BOWL',rating:79,price:'₹4Cr',bat:'RHB',bowl:'RF',matches:20,runs:30,wkts:22},
+{name:'Ramandeep Singh',role:'ALL',rating:75,price:'₹4Cr',bat:'RHB',bowl:'RMF',matches:25,runs:250,wkts:8},
+{name:'Quinton de Kock',role:'WK',rating:87,price:'₹3.6Cr',bat:'LHB',bowl:'-',matches:95,runs:2800,wkts:0},
+{name:'Rahmanullah Gurbaz',role:'WK',rating:83,price:'₹0.5Cr',bat:'RHB',bowl:'-',matches:15,runs:500,wkts:0},
+{name:'Anrich Nortje',role:'BOWL',rating:84,price:'₹6.5Cr',bat:'RHB',bowl:'RF',matches:40,runs:15,wkts:48},
+{name:'Spencer Johnson',role:'BOWL',rating:78,price:'₹2.8Cr',bat:'LHB',bowl:'LF',matches:15,runs:10,wkts:18},
+{name:'Angkrish Raghuvanshi',role:'BAT',rating:70,price:'₹3Cr',bat:'LHB',bowl:'-',matches:5,runs:80,wkts:0},
+{name:'Moeen Ali',role:'ALL',rating:80,price:'₹2Cr',bat:'LHB',bowl:'OB',matches:50,runs:600,wkts:25},
+{name:'Manish Pandey',role:'BAT',rating:76,price:'₹0.75Cr',bat:'RHB',bowl:'-',matches:165,runs:3500,wkts:0},
+{name:'Luvnith Sisodia',role:'WK',rating:65,price:'₹0.3Cr',bat:'LHB',bowl:'-',matches:2,runs:15,wkts:0}
+]},
+
+DC:{name:'Delhi Capitals',short:'DC',color:'#17479E',textColor:'#fff',venue:'Arun Jaitley Stadium, Delhi',captain:'KL Rahul',strength:88,
+players:[
+{name:'KL Rahul',role:'WK',rating:90,isCaptain:true,price:'₹14Cr',bat:'RHB',bowl:'-',matches:120,runs:4600,wkts:0},
+{name:'Jake Fraser-McGurk',role:'BAT',rating:81,price:'₹9Cr',bat:'RHB',bowl:'LB',matches:12,runs:350,wkts:2},
+{name:'Harry Brook',role:'BAT',rating:84,price:'₹6.25Cr',bat:'RHB',bowl:'-',matches:10,runs:300,wkts:0},
+{name:'Axar Patel',role:'ALL',rating:85,price:'₹16.5Cr',bat:'LHB',bowl:'SLA',matches:100,runs:900,wkts:90},
+{name:'Kuldeep Yadav',role:'BOWL',rating:86,price:'₹13.25Cr',bat:'LHB',bowl:'SLC',matches:60,runs:50,wkts:72},
+{name:'Mitchell Starc',role:'BOWL',rating:88,price:'₹11.75Cr',bat:'LHB',bowl:'LF',matches:20,runs:20,wkts:25},
+{name:'Tristan Stubbs',role:'BAT',rating:80,price:'₹5Cr',bat:'RHB',bowl:'-',matches:20,runs:400,wkts:0},
+{name:'Abishek Porel',role:'WK',rating:76,price:'₹4Cr',bat:'LHB',bowl:'-',matches:15,runs:300,wkts:0},
+{name:'Faf du Plessis',role:'BAT',rating:84,price:'₹2Cr',bat:'RHB',bowl:'-',matches:120,runs:3800,wkts:0},
+{name:'T Natarajan',role:'BOWL',rating:78,price:'₹1.5Cr',bat:'LHB',bowl:'LMF',matches:35,runs:15,wkts:40},
+{name:'Karun Nair',role:'BAT',rating:79,price:'₹50L',bat:'RHB',bowl:'-',matches:70,runs:1800,wkts:0},
+{name:'Mukesh Kumar',role:'BOWL',rating:76,price:'₹8Cr',bat:'RHB',bowl:'RMF',matches:30,runs:20,wkts:32},
+{name:'Mohit Sharma',role:'BOWL',rating:74,price:'₹0.3Cr',bat:'RHB',bowl:'RMF',matches:55,runs:30,wkts:60},
+{name:'Sameer Rizvi',role:'BAT',rating:71,price:'₹0.3Cr',bat:'RHB',bowl:'-',matches:5,runs:60,wkts:0},
+{name:'Vipraj Nigam',role:'ALL',rating:68,price:'₹0.3Cr',bat:'LHB',bowl:'SLA',matches:3,runs:20,wkts:2}
+]},
+
+PBKS:{name:'Punjab Kings',short:'PBKS',color:'#ED1B24',textColor:'#fff',venue:'IS Bindra PCA Stadium, Mohali',captain:'Shreyas Iyer',strength:85,
+players:[
+{name:'Shreyas Iyer',role:'BAT',rating:87,isCaptain:true,price:'₹26.75Cr',bat:'RHB',bowl:'-',matches:115,runs:3200,wkts:0},
+{name:'Marcus Stoinis',role:'ALL',rating:83,price:'₹11Cr',bat:'RHB',bowl:'RMF',matches:55,runs:1100,wkts:22},
+{name:'Glenn Maxwell',role:'ALL',rating:85,price:'₹4.2Cr',bat:'RHB',bowl:'OB',matches:115,runs:2400,wkts:30},
+{name:'Arshdeep Singh',role:'BOWL',rating:84,price:'₹18Cr',bat:'LHB',bowl:'LMF',matches:60,runs:20,wkts:75},
+{name:'Yuzvendra Chahal',role:'BOWL',rating:85,price:'₹18Cr',bat:'RHB',bowl:'LB',matches:145,runs:30,wkts:200},
+{name:'Nehal Wadhera',role:'BAT',rating:76,price:'₹4.2Cr',bat:'RHB',bowl:'-',matches:15,runs:300,wkts:0},
+{name:'Prabhsimran Singh',role:'WK',rating:75,price:'₹4Cr',bat:'RHB',bowl:'-',matches:25,runs:400,wkts:0},
+{name:'Lockie Ferguson',role:'BOWL',rating:82,price:'₹2Cr',bat:'RHB',bowl:'RF',matches:20,runs:10,wkts:25},
+{name:'Harpreet Brar',role:'ALL',rating:76,price:'₹1.5Cr',bat:'LHB',bowl:'SLA',matches:30,runs:200,wkts:25},
+{name:'Marco Jansen',role:'ALL',rating:81,price:'₹7Cr',bat:'LHB',bowl:'LF',matches:15,runs:100,wkts:18},
+{name:'Josh Inglis',role:'WK',rating:78,price:'₹2Cr',bat:'RHB',bowl:'-',matches:10,runs:200,wkts:0},
+{name:'Vishnu Vinod',role:'WK',rating:72,price:'₹0.95Cr',bat:'RHB',bowl:'-',matches:15,runs:150,wkts:0},
+{name:'Shashank Singh',role:'BAT',rating:77,price:'₹5.5Cr',bat:'RHB',bowl:'-',matches:30,runs:500,wkts:0},
+{name:'Priyansh Arya',role:'BAT',rating:70,price:'₹3.8Cr',bat:'LHB',bowl:'-',matches:5,runs:80,wkts:0},
+{name:'Azmatullah Omarzai',role:'ALL',rating:78,price:'₹2.4Cr',bat:'RHB',bowl:'RMF',matches:10,runs:150,wkts:10}
+]},
+
+RR:{name:'Rajasthan Royals',short:'RR',color:'#EA1A85',textColor:'#fff',venue:'Sawai Mansingh Stadium, Jaipur',captain:'Sanju Samson',strength:87,
+players:[
+{name:'Sanju Samson',role:'WK',rating:88,isCaptain:true,price:'₹18Cr',bat:'RHB',bowl:'-',matches:140,runs:4200,wkts:0},
+{name:'Yashasvi Jaiswal',role:'BAT',rating:89,price:'₹18Cr',bat:'LHB',bowl:'-',matches:40,runs:1500,wkts:0},
+{name:'Riyan Parag',role:'ALL',rating:81,price:'₹7.5Cr',bat:'RHB',bowl:'OB',matches:55,runs:900,wkts:12},
+{name:'Shimron Hetmyer',role:'BAT',rating:82,price:'₹11Cr',bat:'LHB',bowl:'-',matches:55,runs:1200,wkts:0},
+{name:'Dhruv Jurel',role:'WK',rating:78,price:'₹14Cr',bat:'RHB',bowl:'-',matches:15,runs:250,wkts:0},
+{name:'Sandeep Sharma',role:'BOWL',rating:77,price:'₹0.5Cr',bat:'RHB',bowl:'RMF',matches:100,runs:40,wkts:110},
+{name:'Jofra Archer',role:'BOWL',rating:87,price:'₹12.5Cr',bat:'RHB',bowl:'RF',matches:35,runs:30,wkts:45},
+{name:'Wanindu Hasaranga',role:'ALL',rating:84,price:'₹5.25Cr',bat:'RHB',bowl:'LB',matches:25,runs:100,wkts:30},
+{name:'Maheesh Theekshana',role:'BOWL',rating:79,price:'₹4.4Cr',bat:'RHB',bowl:'OB',matches:20,runs:15,wkts:22},
+{name:'Tushar Deshpande',role:'BOWL',rating:76,price:'₹6.5Cr',bat:'RHB',bowl:'RMF',matches:35,runs:20,wkts:40},
+{name:'Nitish Rana',role:'BAT',rating:79,price:'₹4.2Cr',bat:'LHB',bowl:'OB',matches:100,runs:2400,wkts:15},
+{name:'Rovman Powell',role:'BAT',rating:78,price:'₹1.5Cr',bat:'RHB',bowl:'-',matches:15,runs:250,wkts:0},
+{name:'Kumar Kartikeya',role:'BOWL',rating:74,price:'₹0.3Cr',bat:'RHB',bowl:'SLC',matches:20,runs:10,wkts:18},
+{name:'Fazalhaq Farooqi',role:'BOWL',rating:82,price:'₹2Cr',bat:'LHB',bowl:'LMF',matches:15,runs:5,wkts:20},
+{name:'Shubham Dubey',role:'BAT',rating:70,price:'₹0.8Cr',bat:'RHB',bowl:'-',matches:5,runs:60,wkts:0}
+]},
+
+SRH:{name:'Sunrisers Hyderabad',short:'SRH',color:'#FF822A',textColor:'#000',venue:'Rajiv Gandhi Intl Stadium, Hyderabad',captain:'Pat Cummins',strength:89,
+players:[
+{name:'Travis Head',role:'BAT',rating:88,price:'₹14Cr',bat:'LHB',bowl:'OB',matches:30,runs:1100,wkts:2},
+{name:'Abhishek Sharma',role:'ALL',rating:82,price:'₹14Cr',bat:'LHB',bowl:'SLA',matches:40,runs:900,wkts:10},
+{name:'Heinrich Klaasen',role:'WK',rating:89,price:'₹23Cr',bat:'RHB',bowl:'-',matches:35,runs:1200,wkts:0},
+{name:'Pat Cummins',role:'BOWL',rating:89,isCaptain:true,price:'₹18Cr',bat:'RHB',bowl:'RF',matches:40,runs:200,wkts:45},
+{name:'Nitish Kumar Reddy',role:'ALL',rating:80,price:'₹6Cr',bat:'RHB',bowl:'RMF',matches:15,runs:350,wkts:8},
+{name:'Ishan Kishan',role:'WK',rating:83,price:'₹11.25Cr',bat:'LHB',bowl:'-',matches:80,runs:2200,wkts:0},
+{name:'Mohammad Shami',role:'BOWL',rating:85,price:'₹10Cr',bat:'RHB',bowl:'RMF',matches:60,runs:30,wkts:70},
+{name:'Harshal Patel',role:'BOWL',rating:82,price:'₹8Cr',bat:'RHB',bowl:'RMF',matches:75,runs:150,wkts:95},
+{name:'Adam Zampa',role:'BOWL',rating:81,price:'₹2.4Cr',bat:'RHB',bowl:'LB',matches:25,runs:10,wkts:28},
+{name:'Rahul Chahar',role:'BOWL',rating:77,price:'₹0.5Cr',bat:'RHB',bowl:'LB',matches:40,runs:15,wkts:42},
+{name:'Atharva Taide',role:'BAT',rating:72,price:'₹0.3Cr',bat:'LHB',bowl:'-',matches:8,runs:120,wkts:0},
+{name:'Abhinav Manohar',role:'BAT',rating:73,price:'₹2.8Cr',bat:'RHB',bowl:'-',matches:20,runs:300,wkts:0},
+{name:'Jaydev Unadkat',role:'BOWL',rating:75,price:'₹1Cr',bat:'LHB',bowl:'LMF',matches:90,runs:80,wkts:100},
+{name:'Brydon Carse',role:'ALL',rating:78,price:'₹1Cr',bat:'RHB',bowl:'RF',matches:5,runs:40,wkts:6},
+{name:'Sachin Baby',role:'BAT',rating:68,price:'₹0.3Cr',bat:'LHB',bowl:'-',matches:25,runs:250,wkts:0}
+]},
+
+GT:{name:'Gujarat Titans',short:'GT',color:'#1C1C2B',textColor:'#B0A28F',venue:'Narendra Modi Stadium, Ahmedabad',captain:'Shubman Gill',strength:87,
+players:[
+{name:'Shubman Gill',role:'BAT',rating:90,isCaptain:true,price:'₹16.5Cr',bat:'RHB',bowl:'-',matches:70,runs:2400,wkts:0},
+{name:'Sai Sudharsan',role:'BAT',rating:82,price:'₹8.5Cr',bat:'LHB',bowl:'-',matches:30,runs:800,wkts:0},
+{name:'Jos Buttler',role:'WK',rating:88,price:'₹15.75Cr',bat:'RHB',bowl:'-',matches:80,runs:3400,wkts:0},
+{name:'Rashid Khan',role:'BOWL',rating:91,price:'₹18Cr',bat:'RHB',bowl:'LB',matches:100,runs:400,wkts:120},
+{name:'Rahul Tewatia',role:'ALL',rating:79,price:'₹8Cr',bat:'LHB',bowl:'LB',matches:85,runs:1100,wkts:25},
+{name:'Shahrukh Khan',role:'BAT',rating:77,price:'₹4Cr',bat:'RHB',bowl:'-',matches:35,runs:500,wkts:0},
+{name:'Kagiso Rabada',role:'BOWL',rating:88,price:'₹10.75Cr',bat:'LHB',bowl:'RF',matches:50,runs:30,wkts:65},
+{name:'Prasidh Krishna',role:'BOWL',rating:79,price:'₹2.2Cr',bat:'RHB',bowl:'RF',matches:25,runs:15,wkts:28},
+{name:'Washington Sundar',role:'ALL',rating:80,price:'₹3.2Cr',bat:'LHB',bowl:'OB',matches:45,runs:350,wkts:35},
+{name:'Gerald Coetzee',role:'BOWL',rating:78,price:'₹2.4Cr',bat:'RHB',bowl:'RF',matches:12,runs:30,wkts:14},
+{name:'Nishant Sindhu',role:'ALL',rating:70,price:'₹0.3Cr',bat:'LHB',bowl:'SLA',matches:8,runs:50,wkts:5},
+{name:'Mahipal Lomror',role:'ALL',rating:73,price:'₹0.5Cr',bat:'LHB',bowl:'SLA',matches:20,runs:200,wkts:5},
+{name:'Ishant Sharma',role:'BOWL',rating:74,price:'₹0.5Cr',bat:'RHB',bowl:'RF',matches:60,runs:20,wkts:60},
+{name:'Sai Kishore',role:'BOWL',rating:75,price:'₹2Cr',bat:'LHB',bowl:'SLA',matches:20,runs:15,wkts:18},
+{name:'Jayant Yadav',role:'ALL',rating:72,price:'₹0.75Cr',bat:'RHB',bowl:'OB',matches:30,runs:150,wkts:20}
+]},
+
+LSG:{name:'Lucknow Super Giants',short:'LSG',color:'#A72056',textColor:'#fff',venue:'BRSABV Ekana Stadium, Lucknow',captain:'Rishabh Pant',strength:88,
+players:[
+{name:'Rishabh Pant',role:'WK',rating:90,isCaptain:true,price:'₹27Cr',bat:'LHB',bowl:'-',matches:75,runs:2800,wkts:0},
+{name:'Nicholas Pooran',role:'WK',rating:85,price:'₹21Cr',bat:'LHB',bowl:'-',matches:60,runs:1400,wkts:0},
+{name:'David Miller',role:'BAT',rating:83,price:'₹7.5Cr',bat:'LHB',bowl:'-',matches:110,runs:2800,wkts:0},
+{name:'Aiden Markram',role:'BAT',rating:82,price:'₹8Cr',bat:'RHB',bowl:'OB',matches:25,runs:500,wkts:5},
+{name:'Mitchell Marsh',role:'ALL',rating:84,price:'₹3.4Cr',bat:'RHB',bowl:'RMF',matches:20,runs:300,wkts:8},
+{name:'Ravi Bishnoi',role:'BOWL',rating:81,price:'₹11Cr',bat:'RHB',bowl:'LB',matches:40,runs:10,wkts:45},
+{name:'Mayank Yadav',role:'BOWL',rating:82,price:'₹11Cr',bat:'RHB',bowl:'RF',matches:8,runs:5,wkts:10},
+{name:'Mohsin Khan',role:'BOWL',rating:78,price:'₹4Cr',bat:'LHB',bowl:'LMF',matches:12,runs:10,wkts:15},
+{name:'Ayush Badoni',role:'BAT',rating:79,price:'₹4Cr',bat:'RHB',bowl:'LB',matches:35,runs:650,wkts:8},
+{name:'Avesh Khan',role:'BOWL',rating:77,price:'₹9.75Cr',bat:'RHB',bowl:'RMF',matches:50,runs:20,wkts:55},
+{name:'Abdul Samad',role:'BAT',rating:75,price:'₹4.25Cr',bat:'RHB',bowl:'OB',matches:35,runs:400,wkts:3},
+{name:'Himmat Singh',role:'BAT',rating:70,price:'₹0.3Cr',bat:'RHB',bowl:'-',matches:5,runs:60,wkts:0},
+{name:'Shamar Joseph',role:'BOWL',rating:76,price:'₹0.3Cr',bat:'RHB',bowl:'RF',matches:5,runs:5,wkts:8},
+{name:'Matt Henry',role:'BOWL',rating:78,price:'₹1.5Cr',bat:'RHB',bowl:'RMF',matches:10,runs:10,wkts:12},
+{name:'Digvesh Singh',role:'BOWL',rating:68,price:'₹0.3Cr',bat:'RHB',bowl:'RMF',matches:2,runs:3,wkts:2}
+]}
+};
+
+/* ═══ VENUES ═══ */
+const VENUES={
+'chepauk':{name:'MA Chidambaram Stadium',city:'Chennai',pitch:'spin',avgFirst:165,avgSecond:155,boundary:'60m',capacity:'50,000',pace:0.3,spin:0.8,dew:0.7,tags:['Spin Paradise','Slow Turn','Dew Factor'],color:'#F9CD05'},
+'wankhede':{name:'Wankhede Stadium',city:'Mumbai',pitch:'batting',avgFirst:185,avgSecond:175,boundary:'65m',capacity:'33,000',pace:0.5,spin:0.4,dew:0.8,tags:['Batting Friendly','Dew Dominant','Short Boundary'],color:'#004BA0'},
+'chinnaswamy':{name:'M Chinnaswamy Stadium',city:'Bengaluru',pitch:'batting',avgFirst:190,avgSecond:180,boundary:'58m',capacity:'40,000',pace:0.4,spin:0.3,dew:0.6,tags:['Run Fest','Smallest Ground','High Scoring'],color:'#EC1C24'},
+'eden':{name:'Eden Gardens',city:'Kolkata',pitch:'balanced',avgFirst:175,avgSecond:168,boundary:'64m',capacity:'66,000',pace:0.5,spin:0.6,dew:0.7,tags:['Balanced','Spin Later','Historic'],color:'#3A225D'},
+'arun_jaitley':{name:'Arun Jaitley Stadium',city:'Delhi',pitch:'batting',avgFirst:180,avgSecond:172,boundary:'63m',capacity:'41,000',pace:0.5,spin:0.5,dew:0.6,tags:['Batting Track','Even Bounce','Dew Factor'],color:'#17479E'},
+'mohali':{name:'IS Bindra PCA Stadium',city:'Mohali',pitch:'balanced',avgFirst:175,avgSecond:165,boundary:'64m',capacity:'26,000',pace:0.6,spin:0.4,dew:0.5,tags:['Pace Friendly','Good Carry','Even Contest'],color:'#ED1B24'},
+'jaipur':{name:'Sawai Mansingh Stadium',city:'Jaipur',pitch:'spin',avgFirst:168,avgSecond:158,boundary:'63m',capacity:'30,000',pace:0.3,spin:0.7,dew:0.5,tags:['Spin Track','Slow Pitch','Low Scoring'],color:'#EA1A85'},
+'hyderabad':{name:'Rajiv Gandhi Intl Stadium',city:'Hyderabad',pitch:'batting',avgFirst:185,avgSecond:178,boundary:'65m',capacity:'55,000',pace:0.5,spin:0.4,dew:0.7,tags:['Flat Deck','High Scores','SRH Fortress'],color:'#FF822A'},
+'ahmedabad':{name:'Narendra Modi Stadium',city:'Ahmedabad',pitch:'balanced',avgFirst:172,avgSecond:164,boundary:'70m',capacity:'132,000',pace:0.5,spin:0.6,dew:0.6,tags:['Big Ground','Spin Later','Largest Stadium'],color:'#1C1C2B'},
+'lucknow':{name:'BRSABV Ekana Stadium',city:'Lucknow',pitch:'balanced',avgFirst:175,avgSecond:167,boundary:'65m',capacity:'50,000',pace:0.5,spin:0.5,dew:0.6,tags:['Balanced Venue','New Stadium','True Bounce'],color:'#A72056'},
+'dharamsala':{name:'HPCA Stadium',city:'Dharamsala',pitch:'batting',avgFirst:182,avgSecond:174,boundary:'62m',capacity:'23,000',pace:0.6,spin:0.3,dew:0.3,tags:['Scenic','Pace Assist','Thin Air'],color:'#4CAF50'},
+'pune':{name:'MCA Stadium',city:'Pune',pitch:'balanced',avgFirst:170,avgSecond:162,boundary:'64m',capacity:'37,000',pace:0.5,spin:0.5,dew:0.5,tags:['Balanced','Neutral Venue','Even Pace'],color:'#607D8B'},
+'guwahati':{name:'ACA Stadium',city:'Guwahati',pitch:'batting',avgFirst:178,avgSecond:170,boundary:'63m',capacity:'40,000',pace:0.5,spin:0.4,dew:0.5,tags:['Flat Pitch','New Venue','Good Batting'],color:'#009688'},
+'visakhapatnam':{name:'ACA-VDCA Stadium',city:'Visakhapatnam',pitch:'balanced',avgFirst:172,avgSecond:165,boundary:'65m',capacity:'28,000',pace:0.5,spin:0.5,dew:0.6,tags:['Sea Breeze','Balanced','Coastal'],color:'#3F51B5'}
+};
+
+/* ═══ QUICK MATCHES ═══ */
+const QUICK_MATCHES=[
+{t1:'CSK',t2:'MI',venue:'chepauk',label:'El Clasico'},
+{t1:'RCB',t2:'KKR',venue:'chinnaswamy',label:'Clash'},
+{t1:'DC',t2:'RR',venue:'arun_jaitley',label:'Capital Derby'},
+{t1:'SRH',t2:'GT',venue:'hyderabad',label:'Power Play'},
+{t1:'LSG',t2:'PBKS',venue:'lucknow',label:'New Rivalry'},
+{t1:'MI',t2:'RCB',venue:'wankhede',label:'Mega Match'},
+{t1:'CSK',t2:'DC',venue:'chepauk',label:'Dhoni\'s Den'},
+{t1:'KKR',t2:'SRH',venue:'eden',label:'Eastern Derby'}
+];
+
+/* ═══ STATE ═══ */
+let state={predictions:0,currentAnalysis:null,scriptLang:'hindi'};
+
+/* ═══ HELPERS ═══ */
+const $=id=>document.getElementById(id);
+const rand=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+const pick=arr=>arr[rand(0,arr.length-1)];
+
+/* ═══ INIT ═══ */
+document.addEventListener('DOMContentLoaded',()=>{
+  initNavigation();
+  populateDropdowns();
+  renderQuickMatches();
+  animateCounters();
+});
+
+function initNavigation(){
+  document.querySelectorAll('.nav-tab').forEach(tab=>{
+    tab.addEventListener('click',()=>{
+      document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+      document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+      tab.classList.add('active');
+      $('page-'+tab.dataset.page).classList.add('active');
+    });
+  });
+}
+
+function populateDropdowns(){
+  const teamOpts=Object.keys(TEAMS).map(k=>`<option value="${k}">${TEAMS[k].short} — ${TEAMS[k].name}</option>`).join('');
+  const venueOpts=Object.keys(VENUES).map(k=>`<option value="${k}">${VENUES[k].name}, ${VENUES[k].city}</option>`).join('');
+
+  // Dashboard dropdowns
+  $('selTeamA').innerHTML='<option value="">— Select Team A —</option>'+teamOpts;
+  $('selTeamB').innerHTML='<option value="">— Select Team B —</option>'+teamOpts;
+  $('selVenue').innerHTML='<option value="">— Auto (Home Ground) —</option>'+venueOpts;
+  $('selLookupTeam').innerHTML='<option value="">— Select Team —</option>'+teamOpts;
+
+  // Compare dropdowns
+  $('cmpTeamA').innerHTML='<option value="">— Select Team A —</option>'+teamOpts;
+  $('cmpTeamB').innerHTML='<option value="">— Select Team B —</option>'+teamOpts;
+
+  // Ground dropdown
+  $('gndVenue').innerHTML='<option value="">— Select Venue —</option>'+venueOpts;
+
+  // Toss updates on team change
+  $('selTeamA').addEventListener('change',updateTossDropdown);
+  $('selTeamB').addEventListener('change',updateTossDropdown);
+}
+
+function updateTossDropdown(){
+  const a=$('selTeamA').value,b=$('selTeamB').value;
+  let html='<option value="">— Select Toss Winner —</option>';
+  if(a) html+=`<option value="${a}">${TEAMS[a].short}</option>`;
+  if(b) html+=`<option value="${b}">${TEAMS[b].short}</option>`;
+  $('selToss').innerHTML=html;
+}
+
+function updatePlayerDropdown(){
+  const tk=$('selLookupTeam').value;
+  if(!tk){$('selLookupPlayer').innerHTML='<option value="">— Select Player —</option>';$('playerDetailCard').classList.remove('show');return;}
+  const players=TEAMS[tk].players;
+  $('selLookupPlayer').innerHTML='<option value="">— Select Player —</option>'+
+    players.map((p,i)=>`<option value="${i}">${p.name} (${p.role})</option>`).join('');
+  $('playerDetailCard').classList.remove('show');
+}
+
+function showPlayerDetail(){
+  const tk=$('selLookupTeam').value;
+  const pi=$('selLookupPlayer').value;
+  if(!tk||pi===''){$('playerDetailCard').classList.remove('show');return;}
+  const p=TEAMS[tk].players[parseInt(pi)];
+  const t=TEAMS[tk];
+  const roleEmoji={BAT:'🏏',BOWL:'🎯',ALL:'⚡',WK:'🧤'}[p.role];
+  const roleBg={BAT:'rgba(245,200,66,.1)',BOWL:'rgba(0,212,170,.1)',ALL:'rgba(77,159,255,.1)',WK:'rgba(255,77,109,.1)'}[p.role];
+
+  $('playerDetailCard').innerHTML=`
+    <div class="pd-header">
+      <div class="pd-avatar" style="background:${roleBg}">${roleEmoji}</div>
+      <div>
+        <div class="pd-name">${p.name} ${p.isCaptain?'👑':''}</div>
+        <div class="pd-team">${t.name} · <span class="role-pill ${p.role}">${p.role}</span> · ${p.bat} ${p.bowl&&p.bowl!=='-'?'/ '+p.bowl:''}</div>
+      </div>
+    </div>
+    <div class="pd-stats">
+      <div class="pd-stat"><div class="v">${p.matches}</div><div class="k">Matches</div></div>
+      <div class="pd-stat"><div class="v">${p.runs.toLocaleString()}</div><div class="k">Runs</div></div>
+      <div class="pd-stat"><div class="v">${p.wkts}</div><div class="k">Wickets</div></div>
+      <div class="pd-stat"><div class="v">${p.rating}</div><div class="k">Rating</div></div>
+      <div class="pd-stat"><div class="v">${p.price}</div><div class="k">Price</div></div>
+      <div class="pd-stat"><div class="v">${Math.round(p.rating*rand(8,12)/10)}</div><div class="k">Fantasy Pts</div></div>
+    </div>`;
+  $('playerDetailCard').classList.add('show');
+}
+
+function renderQuickMatches(){
+  $('quickMatches').innerHTML=QUICK_MATCHES.map((m,i)=>{
+    const t1=TEAMS[m.t1],t2=TEAMS[m.t2],v=VENUES[m.venue];
+    return `<div class="quick-match" onclick="quickAnalyze(${i})">
+      <div class="qm-teams">
+        <div class="qm-badge" style="background:${t1.color};color:${t1.textColor}">${t1.short}</div>
+        <span class="qm-vs">vs</span>
+        <div class="qm-badge" style="background:${t2.color};color:${t2.textColor}">${t2.short}</div>
+      </div>
+      <div class="qm-venue">${v.name}, ${v.city}</div>
+      <div class="qm-format">T20 · ${m.label}</div>
+    </div>`;
+  }).join('');
+}
+
+function quickAnalyze(i){
+  const m=QUICK_MATCHES[i];
+  $('selTeamA').value=m.t1;
+  $('selTeamB').value=m.t2;
+  $('selVenue').value=m.venue;
+  updateTossDropdown();
+  $('selToss').value=Math.random()>.5?m.t1:m.t2;
+  runAnalysis();
+}
+
+/* ═══ MAIN ANALYSIS ═══ */
+function runAnalysis(){
+  const t1k=$('selTeamA').value,t2k=$('selTeamB').value;
+  if(!t1k||!t2k){showError('Please select both teams!');return;}
+  if(t1k===t2k){showError('Please select two different teams!');return;}
+  hideError();
+
+  let venueKey=$('selVenue').value;
+  if(!venueKey){
+    // Auto-pick home ground of Team A
+    const homeMap={CSK:'chepauk',MI:'wankhede',RCB:'chinnaswamy',KKR:'eden',DC:'arun_jaitley',PBKS:'mohali',RR:'jaipur',SRH:'hyderabad',GT:'ahmedabad',LSG:'lucknow'};
+    venueKey=homeMap[t1k]||'wankhede';
+    $('selVenue').value=venueKey;
+  }
+
+  const tossWinner=$('selToss').value||t1k;
+  const tossDecision=$('selDecision').value||'bat';
+
+  showLoading(true);
+  const steps=['Fetching player data...','Analyzing pitch conditions...','Computing win probability...','Building Fantasy XI...','Generating video script...','Finalizing report...'];
+  let si=0;
+  const stepInt=setInterval(()=>{si++;if(si<steps.length)$('loadingStep').textContent=steps[si];},400);
+
+  setTimeout(()=>{
+    clearInterval(stepInt);
+    const data=generateAnalysis(t1k,t2k,venueKey,tossWinner,tossDecision);
+    state.currentAnalysis=data;
+    state.predictions++;
+    $('statPred').textContent=state.predictions;
+    renderResults(data);
+    showLoading(false);
+    $('resultsArea').style.display='block';
+    $('resultsArea').scrollIntoView({behavior:'smooth',block:'start'});
+  },2500);
+}
+
+function generateAnalysis(t1k,t2k,venueKey,tossWinner,tossDecision){
+  const t1=TEAMS[t1k],t2=TEAMS[t2k],venue=VENUES[venueKey];
+
+  // Win probability
+  let t1Strength=t1.strength+rand(-5,5);
+  let t2Strength=t2.strength+rand(-5,5);
+
+  // Home advantage
+  if(venue.city.includes('Chennai')&&t1k==='CSK') t1Strength+=4;
+  if(venue.city.includes('Mumbai')&&t1k==='MI') t1Strength+=4;
+  if(venue.city.includes('Chennai')&&t2k==='CSK') t2Strength+=4;
+  if(venue.city.includes('Mumbai')&&t2k==='MI') t2Strength+=4;
+  if(venue.city.includes('Bengaluru')&&t1k==='RCB') t1Strength+=3;
+  if(venue.city.includes('Bengaluru')&&t2k==='RCB') t2Strength+=3;
+  if(venue.city.includes('Kolkata')&&t1k==='KKR') t1Strength+=3;
+  if(venue.city.includes('Kolkata')&&t2k==='KKR') t2Strength+=3;
+  if(venue.city.includes('Hyderabad')&&t1k==='SRH') t1Strength+=3;
+  if(venue.city.includes('Hyderabad')&&t2k==='SRH') t2Strength+=3;
+
+  // Toss advantage
+  if(tossWinner===t1k) t1Strength+=2; else t2Strength+=2;
+
+  const total=t1Strength+t2Strength;
+  let t1Pct=Math.round((t1Strength/total)*100);
+  t1Pct=Math.max(25,Math.min(75,t1Pct));
+  const t2Pct=100-t1Pct;
+
+  // Score prediction
+  const baseAvg=tossDecision==='bat'?venue.avgFirst:venue.avgFirst-5;
+  const scoreLow=baseAvg-rand(10,20);
+  const scoreHigh=baseAvg+rand(5,15);
+
+  // Fantasy XI
+  const allPlayers=[
+    ...t1.players.map(p=>({...p,team:t1k,teamName:t1.short})),
+    ...t2.players.map(p=>({...p,team:t2k,teamName:t2.short}))
+  ];
+
+  // Score players based on conditions
+  allPlayers.forEach(p=>{
+    let score=p.rating;
+    if(venue.pitch==='spin'&&(p.bowl==='SLA'||p.bowl==='OB'||p.bowl==='LB'||p.bowl==='SLC')) score+=8;
+    if(venue.pitch==='batting'&&(p.role==='BAT'||p.role==='WK')) score+=5;
+    if(venue.pitch==='balanced') score+=2;
+    if(p.role==='ALL') score+=3;
+    score+=rand(-5,5);
+    p.fantasyScore=score;
+    p.projectedPts=Math.round(score*rand(6,12)/10);
+  });
+
+  allPlayers.sort((a,b)=>b.fantasyScore-a.fantasyScore);
+
+  // Build Dream11 with constraints
+  const xi=[];
+  const counts={WK:0,BAT:0,ALL:0,BOWL:0};
+  const teamCounts={};
+  const mins={WK:1,BAT:3,ALL:1,BOWL:3};
+  const maxs={WK:4,BAT:6,ALL:4,BOWL:6};
+
+  // First pass: ensure minimums
+  for(const role of ['WK','BAT','ALL','BOWL']){
+    const available=allPlayers.filter(p=>p.role===role&&!xi.includes(p));
+    for(let i=0;i<mins[role]&&available[i];i++){
+      const tc=teamCounts[available[i].team]||0;
+      if(tc<7){
+        xi.push(available[i]);
+        counts[role]++;
+        teamCounts[available[i].team]=(tc||0)+1;
+      }
+    }
+  }
+
+  // Second pass: fill to 11
+  for(const p of allPlayers){
+    if(xi.length>=11) break;
+    if(xi.includes(p)) continue;
+    const tc=teamCounts[p.team]||0;
+    if(tc>=7) continue;
+    if(counts[p.role]>=maxs[p.role]) continue;
+    xi.push(p);
+    counts[p.role]++;
+    teamCounts[p.team]=(tc||0)+1;
+  }
+
+  xi.sort((a,b)=>b.fantasyScore-a.fantasyScore);
+  if(xi.length>0) xi[0].isC=true;
+  if(xi.length>1) xi[1].isVC=true;
+
+  // H2H
+  const totalH2H=rand(20,35);
+  const t1Wins=Math.round(totalH2H*(t1Pct/100))+rand(-3,3);
+  const t2Wins=totalH2H-t1Wins;
+
+  // Recent form
+  const makeForm=()=>[...Array(5)].map(()=>Math.random()>.35?'W':'L');
+
+  // Weather
+  const temps=[28,30,32,34,36,38];
+  const humids=[45,55,60,65,70,75,80];
+
+  // Key players
+  const keyT1=t1.players.filter(p=>p.rating>=82).sort((a,b)=>b.rating-a.rating).slice(0,3);
+  const keyT2=t2.players.filter(p=>p.rating>=82).sort((a,b)=>b.rating-a.rating).slice(0,3);
+
+  return {
+    t1k,t2k,t1,t2,venue,venueKey,
+    t1Pct,t2Pct,
+    winner:t1Pct>t2Pct?t1k:t2k,
+    winnerName:t1Pct>t2Pct?t1.short:t2.short,
+    tossWinner,tossDecision,
+    scoreLow,scoreHigh,
+    fantasyXI:xi.slice(0,11),
+    h2h:{total:totalH2H,t1Wins:Math.max(0,t1Wins),t2Wins:Math.max(0,t2Wins)},
+    formT1:makeForm(),formT2:makeForm(),
+    weather:{temp:pick(temps),humidity:pick(humids),wind:rand(8,22),dew:venue.dew>.6?'Yes':'Low'},
+    keyT1,keyT2
+  };
+}
+
+function renderResults(d){
+  // Win Probability
+  $('probT1').textContent=d.t1.short;
+  $('probT2').textContent=d.t2.short;
+  $('probPct1').textContent=d.t1Pct+'%';
+  $('probPct2').textContent=d.t2Pct+'%';
+  $('probT1').style.color=d.t1.color;
+  $('probPct1').style.color=d.t1.color;
+
+  setTimeout(()=>{
+    $('probFill1').style.width=d.t1Pct+'%';
+    $('probFill2').style.width=d.t2Pct+'%';
+    $('probFill1').style.background=`linear-gradient(90deg,${d.t1.color},${d.t1.color}dd)`;
+    $('probFill2').style.background=`linear-gradient(90deg,${d.t2.color}dd,${d.t2.color})`;
+  },100);
+
+  const margin=Math.abs(d.t1Pct-d.t2Pct);
+  const conf=margin>15?'high':margin>8?'moderate':'close';
+  $('winnerLine').innerHTML=`🏆 <strong>${d.winnerName}</strong> predicted to win with ${conf} confidence (${Math.max(d.t1Pct,d.t2Pct)}%). ${d.tossWinner?TEAMS[d.tossWinner].short+' won toss & chose to '+d.tossDecision+'.':''}`;
+
+  // Pitch Report
+  const pitchColors={spin:'#C8A04A',batting:'#4A8C3F',balanced:'#5A7A8A',bowling:'#7A4A4A'};
+  const pitchFill=pitchColors[d.venue.pitch]||'#5A7A8A';
+  $('pitchContent').innerHTML=`
+    <div class="pitch-visual">
+      <div class="pitch-oval">
+        <div class="pitch-oval-fill" style="background:linear-gradient(180deg,${pitchFill},${pitchFill}88,${pitchFill}44)"></div>
+        <span class="pitch-type-badge">${d.venue.pitch}</span>
+      </div>
+      <div class="pitch-info">
+        <div class="pitch-score-range">${d.scoreLow}–${d.scoreHigh}</div>
+        <div class="pitch-desc">Predicted 1st innings score range at ${d.venue.name}</div>
+        <div class="pitch-tags">${d.venue.tags.map(t=>`<span class="pitch-tag">${t}</span>`).join('')}</div>
+      </div>
+    </div>
+    <div style="font-size:12px;color:var(--muted);line-height:1.7">
+      <strong>Pace:</strong> ${Math.round(d.venue.pace*100)}% assistance · 
+      <strong>Spin:</strong> ${Math.round(d.venue.spin*100)}% assistance · 
+      <strong>Boundary:</strong> ${d.venue.boundary} · 
+      <strong>Dew:</strong> ${d.weather.dew}
+    </div>`;
+
+  // Weather
+  $('weatherContent').innerHTML=`
+    <div class="weather-item"><div class="weather-icon">🌡️</div><div class="weather-val">${d.weather.temp}°C</div><div class="weather-key">Temperature</div></div>
+    <div class="weather-item"><div class="weather-icon">💧</div><div class="weather-val">${d.weather.humidity}%</div><div class="weather-key">Humidity</div></div>
+    <div class="weather-item"><div class="weather-icon">💨</div><div class="weather-val">${d.weather.wind}km/h</div><div class="weather-key">Wind</div></div>
+    <div class="weather-item"><div class="weather-icon">🌙</div><div class="weather-val">${d.weather.dew}</div><div class="weather-key">Dew</div></div>`;
+
+  // Fantasy XI
+  $('fantasyContent').innerHTML=`<table class="fantasy-table">
+    <thead><tr><th>#</th><th>Player</th><th>Team</th><th>Role</th><th>Pts</th><th>Pick</th></tr></thead>
+    <tbody>${d.fantasyXI.map((p,i)=>`<tr>
+      <td>${i+1}</td>
+      <td style="font-weight:700">${p.name}</td>
+      <td><span style="color:${TEAMS[p.team].color};font-weight:700">${p.teamName}</span></td>
+      <td><span class="role-pill ${p.role}">${p.role}</span></td>
+      <td style="font-family:var(--mono);color:var(--accent)">${p.projectedPts}</td>
+      <td>${p.isC?'<span class="badge-c">C</span>':p.isVC?'<span class="badge-vc">VC</span>':''}</td>
+    </tr>`).join('')}</tbody></table>`;
+
+  // H2H
+  const h2hT1Pct=Math.round(d.h2h.t1Wins/d.h2h.total*100);
+  const h2hT2Pct=100-h2hT1Pct;
+  $('h2hContent').innerHTML=`
+    <div class="h2h-labels"><span style="color:${d.t1.color}">${d.t1.short} ${d.h2h.t1Wins}W</span><span style="color:${d.t2.color}">${d.h2h.t2Wins}W ${d.t2.short}</span></div>
+    <div class="h2h-bar"><div class="h2h-t1" style="width:${h2hT1Pct}%;background:${d.t1.color}"></div><div class="h2h-t2" style="width:${h2hT2Pct}%;background:${d.t2.color}"></div></div>
+    <div class="h2h-detail">Total matches: ${d.h2h.total}<br>Last 5 at this venue: ${d.t1.short} dominated in recent encounters</div>`;
+
+  // Form
+  $('formContent').innerHTML=`
+    <div class="form-row">
+      <span class="form-team-name" style="color:${d.t1.color}">${d.t1.short}</span>
+      <div class="form-dots">${d.formT1.map(r=>`<span class="form-dot ${r.toLowerCase()}">${r}</span>`).join('')}</div>
+    </div>
+    <div class="form-row">
+      <span class="form-team-name" style="color:${d.t2.color}">${d.t2.short}</span>
+      <div class="form-dots">${d.formT2.map(r=>`<span class="form-dot ${r.toLowerCase()}">${r}</span>`).join('')}</div>
+    </div>`;
+
+  // Key Players
+  const renderKey=(players,color)=>players.map(p=>{
+    const emoji={BAT:'🏏',BOWL:'🎯',ALL:'⚡',WK:'🧤'}[p.role];
+    return `<div style="display:flex;align-items:center;gap:8px;padding:8px;background:rgba(255,255,255,.02);border-radius:8px;margin-bottom:6px">
+      <span style="font-size:16px">${emoji}</span>
+      <div style="flex:1"><div style="font-size:12px;font-weight:700">${p.name}${p.isCaptain?' 👑':''}</div><div style="font-size:10px;color:var(--muted)">${p.role} · Rating: ${p.rating}</div></div>
+      <span class="role-pill ${p.role}">${p.role}</span>
+    </div>`;
+  }).join('');
+
+  $('keyPlayersContent').innerHTML=`
+    <div style="margin-bottom:12px"><div style="font-size:10px;letter-spacing:2px;color:${d.t1.color};margin-bottom:6px;font-weight:700">${d.t1.short}</div>${renderKey(d.keyT1,d.t1.color)}</div>
+    <div><div style="font-size:10px;letter-spacing:2px;color:${d.t2.color};margin-bottom:6px;font-weight:700">${d.t2.short}</div>${renderKey(d.keyT2,d.t2.color)}</div>`;
+
+  // Script
+  generateScripts(d);
+  showScript(state.scriptLang);
+}
+
+function generateScripts(d){
+  const t1=d.t1.short,t2=d.t2.short,v=d.venue.name,c=d.venue.city;
+  const captain=d.fantasyXI[0]?.name||'Top Player';
+  const vc=d.fantasyXI[1]?.name||'Second Player';
+  const wkPick=d.fantasyXI.find(p=>p.role==='WK')?.name||captain;
+
+  state.hindiScript=`🏏 ${t1} vs ${t2} — Dream11 Prediction | IPL 2025
+
+नमस्कार दोस्तों! 🙏 CricIntel में आपका स्वागत है!
+
+आज का मैच है ${t1} बनाम ${t2}, ${v}, ${c} में!
+
+📊 MATCH ANALYSIS:
+• ${t1} की जीत की संभावना: ${d.t1Pct}%
+• ${t2} की जीत की संभावना: ${d.t2Pct}%
+• ${d.winnerName} को जीतने का ज्यादा chance है!
+
+🏟️ PITCH REPORT:
+• पिच: ${d.venue.pitch} track
+• Predicted Score: ${d.scoreLow}-${d.scoreHigh} runs
+• ${d.venue.tags.join(', ')}
+
+🌤️ WEATHER:
+• Temperature: ${d.weather.temp}°C
+• Humidity: ${d.weather.humidity}%
+• Dew: ${d.weather.dew}
+
+⭐ DREAM11 FANTASY XI:
+Captain: ${captain} (2x points! 🔥)
+Vice Captain: ${vc} (1.5x points! ⚡)
+Wicketkeeper: ${wkPick}
+
+TOP PICKS:
+${d.fantasyXI.slice(0,6).map((p,i)=>`${i+1}. ${p.name} (${p.teamName}) — ${p.role} — ${p.projectedPts} pts`).join('\n')}
+
+🎯 FINAL PREDICTION:
+${d.winnerName} जीतेगी! ${Math.max(d.t1Pct,d.t2Pct)}% confidence!
+
+Like & Subscribe for daily IPL tips! 🔔
+#IPL2025 #Dream11 #${t1}vs${t2} #CricIntel`;
+
+  state.englishScript=`🏏 ${t1} vs ${t2} — Dream11 Prediction | IPL 2025
+
+Hey everyone! Welcome to CricIntel! 🎯
+
+Today's blockbuster: ${t1} vs ${t2} at ${v}, ${c}!
+
+📊 MATCH ANALYSIS:
+• ${t1} Win Probability: ${d.t1Pct}%
+• ${t2} Win Probability: ${d.t2Pct}%
+• Our prediction: ${d.winnerName} to WIN!
+
+🏟️ PITCH REPORT:
+• Surface: ${d.venue.pitch.charAt(0).toUpperCase()+d.venue.pitch.slice(1)} wicket
+• Expected Score: ${d.scoreLow}-${d.scoreHigh}
+• Key factors: ${d.venue.tags.join(', ')}
+
+🌤️ CONDITIONS:
+• Temp: ${d.weather.temp}°C | Humidity: ${d.weather.humidity}%
+• Wind: ${d.weather.wind}km/h | Dew: ${d.weather.dew}
+
+⭐ DREAM11 FANTASY XI:
+👑 Captain: ${captain} (2x)
+⚡ Vice-Captain: ${vc} (1.5x)
+🧤 Keeper: ${wkPick}
+
+FULL XI:
+${d.fantasyXI.map((p,i)=>`${i+1}. ${p.name} (${p.teamName}) — ${p.role} — ${p.projectedPts} projected pts${p.isC?' 👑 C':p.isVC?' ⚡ VC':''}`).join('\n')}
+
+🔑 KEY MATCHUPS:
+• ${d.keyT1[0]?.name||'Star'} vs ${d.keyT2[0]?.name||'Star'} will be crucial!
+• Watch for ${d.venue.pitch==='spin'?'spinners':'pacers'} at this venue.
+
+🎯 FINAL VERDICT:
+${d.winnerName} predicted to win with ${Math.max(d.t1Pct,d.t2Pct)}% probability!
+
+Like, Share & Subscribe for daily IPL predictions! 🔔
+#IPL2025 #Dream11Tips #${t1}vs${t2} #FantasyCricket`;
+}
+
+function showScript(lang){
+  state.scriptLang=lang;
+  document.querySelectorAll('#scriptCard .tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('#scriptCard .tab-btn').forEach(b=>{if(b.textContent.includes(lang==='hindi'?'हिन्दी':'English'))b.classList.add('active');});
+  $('scriptBox').textContent=lang==='hindi'?state.hindiScript:state.englishScript;
+}
+
+function copyScript(){
+  const text=state.scriptLang==='hindi'?state.hindiScript:state.englishScript;
+  copyToClipboard(text);
+}
+
+function copyFantasy(){
+  if(!state.currentAnalysis) return;
+  const d=state.currentAnalysis;
+  const text=`Dream11 Fantasy XI — ${d.t1.short} vs ${d.t2.short}\n\n`+
+    d.fantasyXI.map((p,i)=>`${i+1}. ${p.name} (${p.teamName}) ${p.role}${p.isC?' [C]':''}${p.isVC?' [VC]':''} — ${p.projectedPts} pts`).join('\n');
+  copyToClipboard(text);
+}
+
+function copyToClipboard(text){
+  navigator.clipboard.writeText(text).then(()=>showToast('Copied to clipboard!')).catch(()=>{
+    const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();showToast('Copied!');
+  });
+}
+
+/* ═══ COMPARE ═══ */
+function runCompare(){
+  const a=$('cmpTeamA').value,b=$('cmpTeamB').value;
+  if(!a||!b){showToast('Select both teams!');return;}
+  if(a===b){showToast('Pick two different teams!');return;}
+
+  const t1=TEAMS[a],t2=TEAMS[b];
+  const avgRating=team=>Math.round(team.players.reduce((s,p)=>s+p.rating,0)/team.players.length);
+  const totalRuns=team=>team.players.reduce((s,p)=>s+p.runs,0);
+  const totalWkts=team=>team.players.reduce((s,p)=>s+p.wkts,0);
+  const totalMatches=team=>Math.max(...team.players.map(p=>p.matches));
+  const batsmen=team=>team.players.filter(p=>p.role==='BAT'||p.role==='WK').length;
+  const bowlers=team=>team.players.filter(p=>p.role==='BOWL').length;
+  const allrounders=team=>team.players.filter(p=>p.role==='ALL').length;
+  const topRated=team=>team.players.reduce((a,b)=>a.rating>b.rating?a:b).name;
+
+  const metrics=[
+    {label:'Team Strength',v1:t1.strength,v2:t2.strength},
+    {label:'Avg Player Rating',v1:avgRating(t1),v2:avgRating(t2)},
+    {label:'Total Squad Runs',v1:totalRuns(t1).toLocaleString(),v2:totalRuns(t2).toLocaleString(),n1:totalRuns(t1),n2:totalRuns(t2)},
+    {label:'Total Squad Wkts',v1:totalWkts(t1).toLocaleString(),v2:totalWkts(t2).toLocaleString(),n1:totalWkts(t1),n2:totalWkts(t2)},
+    {label:'Batsmen Count',v1:batsmen(t1),v2:batsmen(t2)},
+    {label:'Bowler Count',v1:bowlers(t1),v2:bowlers(t2)},
+    {label:'All-Rounders',v1:allrounders(t1),v2:allrounders(t2)},
+    {label:'Squad Size',v1:t1.players.length,v2:t2.players.length},
+    {label:'Star Player',v1:topRated(t1),v2:topRated(t2),noCompare:true},
+    {label:'Captain',v1:t1.captain,v2:t2.captain,noCompare:true},
+    {label:'Home Ground',v1:t1.venue.split(',')[0],v2:t2.venue.split(',')[0],noCompare:true}
+  ];
+
+  $('compareResults').innerHTML=`
+    <div class="card">
+      <div class="card-title">⚔️ ${t1.short} vs ${t2.short} — Full Comparison</div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:16px">
+        <span style="font-size:18px;font-weight:800;color:${t1.color}">${t1.short}</span>
+        <span style="font-size:18px;font-weight:800;color:${t2.color}">${t2.short}</span>
+      </div>
+      ${metrics.map(m=>{
+        const n1=m.n1||parseFloat(m.v1)||0,n2=m.n2||parseFloat(m.v2)||0;
+        const w1=!m.noCompare&&n1>n2?' cmp-win':'';
+        const w2=!m.noCompare&&n2>n1?' cmp-win':'';
+        return `<div class="compare-stat-row">
+          <div class="cmp-val t1${w1}" style="color:${w1?'var(--accent)':t1.color}">${m.v1}</div>
+          <div class="cmp-label">${m.label}</div>
+          <div class="cmp-val t2${w2}" style="color:${w2?'var(--accent)':t2.color}">${m.v2}</div>
+        </div>`;
+      }).join('')}
+    </div>
+    <div class="card" style="margin-top:16px">
+      <div class="card-title">📋 Squad Comparison</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div>
+          <div style="font-size:12px;font-weight:700;color:${t1.color};margin-bottom:8px">${t1.name}</div>
+          ${t1.players.map(p=>`<div style="font-size:11px;padding:4px 0;display:flex;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.04)">
+            <span>${p.name}${p.isCaptain?' 👑':''}</span><span class="role-pill ${p.role}" style="font-size:8px">${p.role}</span>
+          </div>`).join('')}
+        </div>
+        <div>
+          <div style="font-size:12px;font-weight:700;color:${t2.color};margin-bottom:8px">${t2.name}</div>
+          ${t2.players.map(p=>`<div style="font-size:11px;padding:4px 0;display:flex;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.04)">
+            <span>${p.name}${p.isCaptain?' 👑':''}</span><span class="role-pill ${p.role}" style="font-size:8px">${p.role}</span>
+          </div>`).join('')}
+        </div>
+      </div>
+    </div>`;
+}
+
+/* ═══ GROUND ═══ */
+function runGround(){
+  const vk=$('gndVenue').value;
+  if(!vk){showToast('Select a venue!');return;}
+  const v=VENUES[vk];
+
+  const homeTeam=Object.values(TEAMS).find(t=>t.venue.includes(v.city));
+  const highScore=v.avgFirst+rand(20,45);
+  const lowScore=v.avgFirst-rand(30,50);
+
+  $('groundResults').innerHTML=`
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-title">🏟️ ${v.name}</div>
+      <div style="font-size:14px;color:var(--muted);margin-bottom:16px">${v.city} · Capacity: ${v.capacity}</div>
+      <div class="ground-stats">
+        <div class="ground-stat"><div class="val">${v.avgFirst}</div><div class="key">Avg 1st Inn</div></div>
+        <div class="ground-stat"><div class="val">${v.avgSecond}</div><div class="key">Avg 2nd Inn</div></div>
+        <div class="ground-stat"><div class="val">${v.boundary}</div><div class="key">Boundary</div></div>
+        <div class="ground-stat"><div class="val">${Math.round(v.pace*100)}%</div><div class="key">Pace Assist</div></div>
+        <div class="ground-stat"><div class="val">${Math.round(v.spin*100)}%</div><div class="key">Spin Assist</div></div>
+        <div class="ground-stat"><div class="val">${v.dew>.6?'High':'Moderate'}</div><div class="key">Dew Factor</div></div>
+        <div class="ground-stat"><div class="val">${highScore}</div><div class="key">Highest Score</div></div>
+        <div class="ground-stat"><div class="val">${lowScore}</div><div class="key">Lowest Score</div></div>
+        <div class="ground-stat"><div class="val">${v.pitch.toUpperCase()}</div><div class="key">Pitch Type</div></div>
+      </div>
+      <div class="pitch-tags" style="margin-bottom:16px">${v.tags.map(t=>`<span class="pitch-tag">${t}</span>`).join('')}</div>
+      ${homeTeam?`<div class="winner-line">🏠 Home Team: <strong>${homeTeam.name}</strong> — Captain: ${homeTeam.captain}</div>`:''}
+    </div>
+    <div class="card">
+      <div class="card-title">📊 Venue Strategy</div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.8">
+        ${v.pitch==='spin'?`
+          • <strong>Spinners dominate</strong> at this venue. Pick at least 2-3 quality spinners.
+          • Batting first is preferred — chasing gets tougher in 2nd innings.
+          • Wrist spinners have taken ${rand(25,40)}% of all wickets here.
+          • Toss winner should bat first if no dew expected.`
+        :v.pitch==='batting'?`
+          • <strong>Batting paradise!</strong> Load your Fantasy XI with top-order batsmen.
+          • Average powerplay score: ${rand(45,65)} runs.
+          • Boundaries are short — pace bowlers can be expensive.
+          • Death-over specialists are worth picking. ${v.dew>.6?'Dew makes chasing easier.':''}
+          • ${rand(60,75)}% of matches won by chasing team.`
+        :`
+          • <strong>Balanced venue</strong> — both departments contribute equally.
+          • All-rounders are extremely valuable at this ground.
+          • Score tends to be competitive: ${v.avgFirst-10}–${v.avgFirst+10} range.
+          • ${v.spin>.5?'Spin comes into play in middle overs.':'Pace bowlers get early movement.'}
+          • Pick a balanced Fantasy XI with quality from both teams.`}
+      </div>
+    </div>`;
+}
+
+/* ═══ UI HELPERS ═══ */
+function showLoading(show){
+  $('loadingOverlay').classList.toggle('show',show);
+  $('loadingStep').textContent='Fetching player data...';
+}
+
+function showError(msg){$('errMsg').textContent=msg;$('errMsg').classList.add('show');}
+function hideError(){$('errMsg').classList.remove('show');}
+
+function showToast(msg){
+  const t=$('toast');t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2000);
+}
+
+function animateCounters(){
+  const el=$('statPred');
+  el.textContent=state.predictions;
+}
+</script>
+</body>
+</html>
